@@ -4,6 +4,7 @@
  - [ ] sketch frontend
  - [ ] figure out interpolate algo.
          - use RBF
+         
              ```python
                 import numpy as np
                 import scipy.interpolate as interpolate
@@ -14,10 +15,11 @@
                 f = interpolate.Rbf(rr[vals], cc[vals], M[vals], function='linear')
                 interpolated = f(rr, cc)
              ```
+             
              and play with the possilbe funcitons (and their parameter.)
            - use gaussian processes
 
-             ``` python
+             ```python
                 from sklearn.gaussian_process import GaussianProcess
                 gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1., nugget=0.01)
                 gp.fit(X=np.column_stack([rr[vals],cc[vals]]), y=M[vals])
