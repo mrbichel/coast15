@@ -1,6 +1,8 @@
 # coast15
 
 ##TODO
+
+ - [ ] mongo installation bash script
  - [ ] sketch frontend
  - [ ] figure out interpolate algo.
          - use RBF
@@ -31,11 +33,11 @@
          - smooth overlay (f.ex. http://mourner.github.io/simpleheat/demo/ fast!)
 
 ##DATA
+
 http://www.naturalearthdata.com/features/
 Useful guide for creting the geojson files: http://bost.ocks.org/mike/map/
 Data from https://www.tidetimes.org.uk/
-##REFs.
-Coming.
+
 ##Architecture
 ```
 ┌─────────────┐                                             
@@ -44,6 +46,11 @@ Coming.
 │             ┌──────────────────────────────┐             │
 │             │           Scraper            │             │
 │             └──────────────────────────────┘             │
+│                             │                            │
+│                             ▼                            │
+│              ┌─────────────────────────────┐             │
+│              │          database           │             │
+│              └─────────────────────────────┘             │
 │                             │                            │
 │                             │                            │
 │                             ▼                            │
