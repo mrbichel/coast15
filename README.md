@@ -31,8 +31,12 @@
              in this case there are oh so much parameters to try out.
 
  - [ ] figure out which kind of vis.
+ 
          - clusters over map (i.e. hexbins) see fe.x https://www.mapbox.com/blog/heatmaps-and-grids-with-turf/
+         
          - smooth overlay (f.ex. http://mourner.github.io/simpleheat/demo/ fast!)
+         
+         - https://github.com/tmcw/chroniton for time slider 
 
 ##DATA
 
