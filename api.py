@@ -101,7 +101,6 @@ def location():
         json_locs.append(json_loc)
 
 
-
     return jsonify(locations=json_locs)
 
 

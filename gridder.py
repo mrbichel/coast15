@@ -8,7 +8,6 @@ from bson.objectid import ObjectId
 import json
 import pymongo
 from pymongo import MongoClient, GEO2D
-
 from math import pow
 from math import sqrt
 import numpy as np
@@ -59,7 +58,6 @@ def invDist(xv,yv,values,xSize,ySize,power,smoothing):
 
     # convert valuesGrid to projection
     # convert points
-
 
     #Creating the file
     #driver = gdal.GetDriverByName( driverName )
