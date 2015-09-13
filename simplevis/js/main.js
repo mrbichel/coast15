@@ -52,7 +52,7 @@ function getIndex(t, interp, array) {
 // for now and later tune for performances
 // maybe by using a coarse grid and the heatmap we can
 // use few data to achieve the same result.
-d3.json("data.json", function(interp) {
+d3.json("gridded.json", function(interp) {
         arr = [];
         for (var k in interp) {
                 for (var key in interp[k]) {
@@ -102,3 +102,37 @@ d3.json("data.json", function(interp) {
                         .loop(true)
                 );
 });
+
+d3.json("headlands.json",
+        function(data) {
+                for (var i = 0; i < data.length; i++) {
+                        try {
+                                var city = data[i];
+                                var circle = L.circleMarker([city.lat, city.lng], {
+                                        stroke: false,
+                                        radius: 10,
+                                        color: "white",
+                                        //icon: greenIcon
+                                }).addTo(map);
+                        } catch (err) {
+                                console.log("skip");
+                        }
+                }
+        });
+
+d3.json("harbors.json",
+        function(data) {
+                for (var i = 0; i < data.length; i++) {
+                        try {
+                                var city = data[i];
+                                var circle = L.circleMarker([city.lat, city.lng], {
+                                        stroke: false,
+                                        radius: 10,
+                                        color: "blac",
+                                        //icon: greenIcon
+                                }).addTo(map);
+                        } catch (err) {
+                                console.log("skip");
+                        }
+                }
+        });
