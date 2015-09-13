@@ -4,7 +4,7 @@ var map = L.map('map', {
         'attributionControl': false,
 }).setView([56, -4], 6);
 
-// nuke attributes variable for mapping
+// nuke attributes variable, clean mapping
 L.Control.Attribution.prototype.options.prefix = '';
 
 var geojsonLayer;
@@ -25,6 +25,9 @@ function drawMap(geojson) {
                 style: feature_style,
         }).addTo(map);
 }
+
+
+
 // draw the map
 d3.json("subunits.json", function(mapData) {
         try {
@@ -35,44 +38,67 @@ d3.json("subunits.json", function(mapData) {
         drawMap(mapData);
 });
 
+// return data at time t.
+function getIndex(t, interp, array) {
+        // bisect returns the   index of the value  that is closer to t from right
+        idx = d3.bisect(array, t) - 1;
+        val = array[idx];
+        dataobject = interp[idx];
+        data = dataobject[val];
+        return data;
+}
 
 // we need to load the full json and keep in memory
 // for now and later tune for performances
 // maybe by using a coarse grid and the heatmap we can
 // use few data to achieve the same result.
-d3.json("interpolated.json", function(interp) {
+d3.json("data.json", function(interp) {
         arr = [];
-        for (var k in interp){
+        for (var k in interp) {
                 for (var key in interp[k]) {
                         arr.push(key);
                 }
         }
-        data = interp[0][arr[0]];
+        // js wants milliseconds
+        min_time = d3.min(arr);
+        max_time = d3.max(arr);
+        //
+        min_timestamp = new Date(min_time * 1000);
+        max_timestamp = new Date(max_time * 1000);
+        //
+        data = getIndex(min_time, interp, arr);
+        //
         var max = d3.max(data, function(array) {
                 return d3.max(array);
         });
+        //
         heat = L.heatLayer(data, {
                 "max": max,
                 "blur": 18,
-                "minOpacity":0.2,
+                "minOpacity": 0.2,
                 "gradient": {
-                        0.1:'#93AC90', 
+                        0.1: '#93AC90',
                         0.3: '#21325E',
                         0.4: 'blue',
                         1: '#111676'
                 },
-                "radius": 100,
+                "radius": 10,
         }).addTo(map);
+        //slider
+        //
+        d3.select("#slider")
+                .append('div')
+                .call(
+                        chroniton()
+                        .domain([min_timestamp, max_timestamp])
+                        .on('change', function(d) {
+                                timestamp = d.getTime() / 1000;
+                                data = getIndex(timestamp, interp, arr);
+                                // reset and redraw heatmap in background
+                                heat.setLatLngs(data);
+                        })
+                        .playButton(true)
+                        .play()
+                        .loop(true)
+                );
 });
-
-
-//slider
-d3.select("#slider")
-        .append('div')
-        .call(
-                chroniton()
-                .domain([new Date(+new Date() - 60 * 1000), new Date()])
-                .on('change', function(d) {
-                        console.log(d);
-                })
-        );
