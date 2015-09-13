@@ -6,36 +6,31 @@ body {
   background: black;
 }
 
-.subunit.SCT { fill: white;
-stroke: none;}
-.subunit.WLS { fill: white;
-stroke: none;}
-.subunit.NIR { fill: white;
-stroke: none;}
-.subunit.ENG { fill: white;
-    stroke: none;}
+.subunit.SCT { fill: black;
+stroke: black;}
+.subunit.WLS { fill: black;
+stroke: black;}
+.subunit.NIR { fill: black;
+stroke: black;}
+.subunit.ENG { fill: black;
+    stroke: black;}
 
 .subunit.IRL,
 .subunit-label.IRL {
   //display: none;
-  stroke: none;
-  fill: white;
+  stroke: black;
+  fill: black;
 }
 
 .measure_loc {
-    fill: rgba(60,60,255,0.1);
+    fill: rgba(255,255,255,1);
     stroke: none;
 }
 
 .subunit-boundary {
-  fill: none;
+  fill: black;
   stroke-dasharray: 2,2;
   stroke-linejoin: round;
-  stroke: none;
-}
-
-.subunit-boundary.IRL {
-  stroke: #aaa;
   stroke: none;
 }
 
@@ -45,6 +40,10 @@ stroke: none;}
   font-size: 20px;
   font-weight: 300;
   text-anchor: middle;
+}
+
+#voronoi-paths {
+  z-index: -200;
 }
 
 .place,
@@ -61,10 +60,10 @@ text {
 </style>
 <body>
 
-<script src="js/turf.min.js" charset="utf-8"></script>
+<script src="bower_components/turf/turf.min.js"></script>
+<script src="bower_components/d3/d3.min.js"></script>
+<script src="bower_components/topojson/topojson.js"></script>
 
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://d3js.org/topojson.v1.min.js"></script>
 <script>
 
 var width = 960,
@@ -74,8 +73,10 @@ var projection = d3.geo.albers()
     .center([0, 55.4])
     .rotate([4.4, 0])
     .parallels([50, 60])
-    .scale(4800)
+    .scale(2800)
     .translate([width / 2, height / 2]);
+
+var tideScale = d3.scale.linear();//.domain([-0.2,14.65]); // low and high historical tide level for mapping
 
 var path = d3.geo.path()
     .projection(projection);
@@ -84,8 +85,15 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("uk.json", function(error, uk) {
+var voronoi = d3.geom.voronoi()
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; })
+    .clipExtent([[0, 0], [width, height]]);
+
+d3.json("data/uk.json", function(error, uk) {
   if (error) return console.error(error);
+
+    var paths = svg.append("svg:g").attr("id", "voronoi-paths");
 
     var subunits = topojson.feature(uk, uk.objects.subunits), // do coastlines and landmasses instead
         places = topojson.feature(uk, uk.objects.places); // coastal cities
@@ -103,23 +111,25 @@ d3.json("uk.json", function(error, uk) {
     .attr("class", function(d) { return "subunit " + d.id; })
     .attr("d", path);
 
- svg.append("path")
+   svg.append("path")
     .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a !== b && a.id !== "IRL"; }))
     .attr("d", path)
     .attr("class", "subunit-boundary");
 
-svg.append("path")
+   svg.append("path")
     .datum(topojson.mesh(uk, uk.objects.subunits, function(a, b) { return a === b && a.id === "IRL"; }))
     .attr("d", path)
     .attr("class", "subunit-boundary IRL");
 
-svg.selectAll(".subunit-label")
+   svg.selectAll(".subunit-label")
       .data(subunits.features)
     .enter().append("text")
       .attr("class", function(d) { return "subunit-label " + d.id; })
       .attr("transform", function(d) { return "translate(" + path.centroid(d) + ")"; })
       .attr("dy", ".35em")
       .text(function(d) { return d.properties.name; });
+
+
 
 
    /* svg.append("path")
@@ -143,38 +153,69 @@ svg.selectAll(".subunit-label")
 // draw size based on water height
 // interpolation sampling
 
-
     //http://127.0.0.1:5000/loc
 
     var data; // a global
 
     d3.json("http://127.0.0.1:5000/loc", function(error, json) {
       if (error) return console.warn(error);
+
       locations = json.locations;
-      //console.log(data);
+      //console.log(locations);
+
+
+      heights = [];
+
+      locations.forEach(function(d) {
+
+        heights.push(d.height);
+
+        var position = projection([
+              d.latlng[1],
+              d.latlng[0]
+            ]);
+        d[0] =  position[0];
+        d[1] = position[1];
+
+        d.x = position[1];
+        d.y = position[0];
+
+       });
+
+        tideScale.domain([d3.min(heights), d3.max(heights)]);
 
          svg.selectAll(".measure_loc")
           .data(locations)
           .enter().append("circle", ".measure_loc")
-          .attr("r", function(d) {
-            return 12 + d.height
-          })
+          .attr("r", 1)
           .attr("transform", function(d) {
             return "translate(" + projection([
               d.latlng[1],
               d.latlng[0]
-            ]) + ")"
+            ]) + ")";
           })
-          .attr("class", "measure_loc");
+          .attr("class", "measure_loc")
+          //.style('fill-opacity', function(d) {return tideScale(d.height)});
 
-      for(var i=0; i<locations.length; i++) {
-        console.log(locations[i]['height']);
-        //console.log(data[i]);
-      }
+
+
+          paths.selectAll("path")
+      .data(d3.geom.voronoi(locations))
+    .enter().append("svg:path").attr("d", function(d) { return "M" + d.join(",") + "Z"; })
+      .attr("id", function(d,i) {
+        return "path-"+i; })
+      .attr("clip-path", function(d,i) { return "url(#clip-"+i+")"; })
+      .style("fill", function(d,i) {  return d3.rgb(0, 255 - (tideScale(d.point.height)*255), tideScale(d.point.height)*255);   })
+      .style('fill-opacity', 1)
+      .style('stroke-opacity', function(d) {return tideScale(d.point.height)})
+      //.style("stroke", function(d,i) {  return d3.rgb(200, 200, tideScale(d.point.height)*255);   });
+
+
+
 
       /*for(var x=0; x<width; x++) {
           for(var y=0; y<width; y++) {
-              
+
               // find 3 closest locations, interpolate value and save
 
           }

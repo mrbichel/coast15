@@ -12,6 +12,8 @@ from math import pow
 from math import sqrt
 import numpy as np
 import matplotlib.pyplot as plt
+from time import mktime
+
 
 from PIL import Image
 import pyproj
@@ -61,7 +63,7 @@ def dataToJson():
 
     tide_entries = tide_logs.find({"timestamp": {"$gte": fromDate, "$lte": toDate }})
     out = []
-    outputFile = open('./coast_shared_data/tide_data_as_json_' + fromDate.isoformat() + '-' +  fromDate.isoformat() + '.json','w+')
+    outputFile = open('./coast_shared_data/tide_data_as_json_' + mktime(fromDate.timetuple()) + '.json','w+')
 
     for entry in tide_entries:
 
@@ -70,7 +72,7 @@ def dataToJson():
         loc = locations.find_one({"_id": ObjectId(entry['location'])})
         #print loc
 
-        o = {"t": entry['timestamp'].isoformat(),
+        o = {"t": mktime(entry['timestamp'].timetuple()),
              "lat": loc['latlng'][0],
              "lng": loc['latlng'][1],
              "h": entry['height']}
@@ -92,7 +94,7 @@ def dataToInterpolatedFramesAsJson():
 
     duration = toDate - fromDate;
 
-    outputFile = open('./coast_shared_data/tide_data_interpolated_frames_as_json_{}.json'.format(fromDate.isoformat()),'w+')
+    outputFile = open('./coast_shared_data/tide_data_interpolated_frames_as_json_{}.json'.format(mktime(fromDate.timetuple())),'w+')
     out = []
 
     total_frames = int(math.ceil(duration.total_seconds() / frameResolutionInSeconds))
@@ -117,13 +119,44 @@ def dataToInterpolatedFramesAsJson():
 
         print "framesize {}".format(len(frameObject))
 
-        out.append({frameTime.isoformat(): frameObject})
-
+        out.append({mktime(frameTime.timetuple()): frameObject})
 
     outputFile.write(json.dumps(out))
     outputFile.close()
 
-# def dataTo
+def pointValue(x,y,power,smoothing,xv,yv,values):
+    nominator=0
+    denominator=0
+    for i in range(0,len(values)):
+        dist = sqrt((x-xv[i])*(x-xv[i])+(y-yv[i])*(y-yv[i])+smoothing*smoothing);
+        #If the point is really close to one of the data points, return the data point value to avoid singularities
+        if(dist<0.0000000001):
+            return values[i]
+        nominator=nominator+(values[i]/pow(dist,power))
+        denominator=denominator+(1/pow(dist,power))
+    #Return NODATA if the denominator is zero
+    if denominator > 0:
+        value = nominator/denominator
+    else:
+        value = -9999
+    return value
+
+
+def invDist(xv,yv,values,xSize,ySize,power,smoothing):
+    valuesGrid = np.zeros((xSize,ySize))
+
+    # Getting the interpolated values with method pointValue
+    for x in range(0,xSize):
+        for y in range(0,ySize):
+            valuesGrid[x][y] = pointValue(x,y,power,smoothing,xv,yv,values)
+
+    return valuesGrid
+
+def dataToInterpolatedGriddedFramesAsJson():
+
+
+
+    return
 
 
 if __name__ == "__main__":
