@@ -13,7 +13,8 @@ from math import sqrt
 import numpy as np
 import matplotlib.pyplot as plt
 from time import mktime
-
+from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
 
 from PIL import Image
 import pyproj
@@ -170,24 +171,17 @@ def invDist(xv,yv,values,xSize,ySize,power,smoothing, geotransform):
 
 def dataToInterpolatedGriddedFramesAsJson():
 
-    locs = locations.find()
-
-    valMin = -0.20
-    valMax = 14.65
-    #valMin = 0.0
-    #valMax = 1.0
+    #valMin = -0.20
+    #valMax = 14.65
+    valMin = 0.0
+    valMax = 1.0
     power=2
     smoothing=1 #2
 
     xSize=100
     ySize=100 #reversed ??
 
-    data = {}
-    xv=[]
-    yv=[]
-    values=[]
 
-    clocations = []
 
     frameResolutionInSeconds = 60*30
 
@@ -204,6 +198,13 @@ def dataToInterpolatedGriddedFramesAsJson():
     for frame in range(total_frames):
         frameTime = fromDate + timedelta(seconds=frame*frameResolutionInSeconds)
 
+        data = {}
+        xv=[]
+        yv=[]
+        values=[]
+
+        clocations = []
+
         frameObject = []
         print "Getting interpolated values for frame {} of {}, with timestamp {}".format(frame, total_frames, frameTime.isoformat())
 
@@ -217,8 +218,8 @@ def dataToInterpolatedGriddedFramesAsJson():
                 #d = datetime.now()
 
                 values.append(val)
-                #valMin = min(valMin, val)
-                #valMax = max(valMax, val)
+                valMin = min(valMin, val)
+                valMax = max(valMax, val)
                 clocations.append(loc)
 
         data['xv']=xv
@@ -238,7 +239,6 @@ def dataToInterpolatedGriddedFramesAsJson():
             lngMax = max(lngMax, yv[i])
             lngMin = min(lngMin, yv[i])
 
-
         geotransform=[]
         geotransform.append(latMin)
         geotransform.append((latMax-latMin)/xSize)
@@ -255,12 +255,11 @@ def dataToInterpolatedGriddedFramesAsJson():
                 l = []
                 v =  translate(ZI[i][j], valMin, valMax, 0, 1)
                 print v
-                lat = (i+geotransform[0])*geotransform[1]
-                lng = (j+geotransform[3])*geotransform[5]
+                lat = translate(i, 0, xSize, latMin, latMax)
+                lng = translate(j, 0, ySize, lngMin, lngMax)
 
                 l.append(lat)
                 l.append(lng)
-
                 l.append(v)
 
                 frameObject.append(l)
@@ -273,12 +272,91 @@ def dataToInterpolatedGriddedFramesAsJson():
     outputFile.write(json.dumps(out))
     outputFile.close()
 
+
+
+def dataToInterpolatedGriddedFramesAsJsonScipy():
+    valMin = 0.0
+    valMax = 1.0
+
+    frameResolutionInSeconds = 60*30
+
+    fromDate = datetime.now() - timedelta(hours=2)
+    toDate = datetime.now() + timedelta(days=0)
+
+    duration = toDate - fromDate;
+
+    outputFile = open('./coast_shared_data/tide_data_interpolated_frames_as_json_{}.json'.format(mktime(fromDate.timetuple())),'w+')
+    out = []
+
+    total_frames = int(math.ceil(duration.total_seconds() / frameResolutionInSeconds))
+
+    for frame in range(1):
+        frameTime = fromDate + timedelta(seconds=frame*frameResolutionInSeconds)
+
+        xv=[]
+        yv=[]
+        values=[]
+
+        frameObject = []
+        print "Getting interpolated values for frame {} of {}, with timestamp {}".format(frame, total_frames, frameTime.isoformat())
+
+        for loc in locations.find():
+
+            val = getInterpolatedHeightForLocation(loc, frameTime)
+            if val:
+                xv.append(loc['latlng'][1])
+                yv.append(loc['latlng'][0])
+
+                values.append(val)
+                valMin = min(valMin, val)
+                valMax = max(valMax, val)
+
+        latMax = -900000
+        latMin = 900000
+        lngMax = -1800000
+        lngMin = 1800000
+
+        for i in range(0,len(xv)):
+            #xv[i], yv[i] = pyproj.transform(EPSG4326, toP, xv[i], yv[i])
+
+            latMax = max(latMax, xv[i])
+            latMin = min(latMin, xv[i])
+            lngMax = max(lngMax, yv[i])
+            lngMin = min(lngMin, yv[i])
+
+        points = np.vstack((xv, yv)).T
+
+        cellsize = 0.0001
+        ncol = int(math.ceil(latMax-latMin)) / cellsize
+        nrow = int(math.ceil(lngMax-lngMin)) / cellsize
+        xres = (latMax - latMin) / float(ncol) #which should get back to original cell size
+        yres = (lngMax - lngMin) / float(nrow)
+
+        gridx, gridy = np.mgrid[latMin:latMax:500*1j, lngMin:lngMax:500*1j]
+
+        grid_z0 = griddata(points, np.array(values), (gridx, gridy), method='nearest')
+
+        grid_z1 = griddata(points, values, (gridx, gridy), method='linear')
+        grid_z2 = griddata(points, values, (gridx, gridy), method='cubic')
+
+        plt.subplot(222)
+        plt.imshow(grid_z0.T, extent=(0,1,0,1), origin='lower')
+        plt.title('Nearest')
+        plt.subplot(223)
+        plt.imshow(grid_z1.T, extent=(0,1,0,1), origin='lower')
+        plt.title('Linear')
+        plt.subplot(224)
+        plt.imshow(grid_z2.T, extent=(0,1,0,1), origin='lower')
+        plt.title('Cubic')
+        plt.gcf().set_size_inches(6, 6)
+        plt.show()
+
+
 if __name__ == "__main__":
 
     #dataToJson()
-
-    dataToInterpolatedGriddedFramesAsJson()
-
+    #dataToInterpolatedGriddedFramesAsJson()
+    dataToInterpolatedGriddedFramesAsJsonScipy()
     # get all timestamps for 4 day period
 
 
