@@ -136,3 +136,118 @@ d3.json("harbors.json",
                         }
                 }
         });
+var data; // a global
+
+  var mapLayer = {
+    onAdd: function(map) {
+      map.on('viewreset moveend', drawWithLoading);
+      drawWithLoading();
+    }
+  };
+
+d3.json("points.json", function(error, json) {
+        if (error) return console.warn(error);
+
+        //var width = 960,
+        //height = 1160;
+
+        //var projection = d3.geo.albers()
+        //.center([0, 55.4])
+        //.rotate([4.4, 0])
+        //.parallels([50, 60])
+        //.scale(2800)
+        //.translate([width / 2, height / 2]);
+
+        var tideScale = d3.scale.linear(); //.domain([-0.2,14.65]); // low and high historical tide level for mapping
+
+        //var path = d3.geo.path()
+        //.projection(projection);
+
+        //var svg = d3.select("body").append("svg")
+        //.attr("width", width)
+        //.attr("height", height);
+
+        var bounds = map.getBounds(),
+                topLeft = map.latLngToLayerPoint(bounds.getNorthWest()),
+                bottomRight = map.latLngToLayerPoint(bounds.getSouthEast()),
+                existing = d3.set(),
+                drawLimit = bounds.pad(0.4);
+        var svg = d3.select(map.getPanes().overlayPane).append("svg")
+                .attr('id', 'overlay')
+                .attr("class", "leaflet-zoom-hide")
+                .style("width", map.getSize().x + 'px')
+                .style("height", map.getSize().y + 'px')
+                .style("margin-left", topLeft.x + "px")
+                .style("margin-top", topLeft.y + "px");
+
+
+        var voronoi = d3.geom.voronoi()
+                .x(function(d) {
+                        return d.x;
+                })
+                .y(function(d) {
+                        return d.y;
+                })
+                .clipExtent([
+                        [0, 0],
+                        [map.getSize().y, map.getSize().x]
+                ]);
+
+
+        var paths = svg.append("svg:g").attr("id", "voronoi-paths");
+
+        locations = json.locations;
+        //console.log(locations);
+
+        var projection = d3.geo.albers()
+            .center([0, 55.4])
+            .rotate([4.4, 0])
+            .parallels([50, 60])
+            .scale(2800)
+            .translate([map.getSize().y, map.getSize().x]);
+
+        heights = [];
+        locations.forEach(function(d) {
+                heights.push(d.height);
+
+                var position = projection([
+                        d.latlng[1],
+                        d.latlng[0]
+                ]);
+                d[0] = position[0];
+                d[1] = position[1];
+
+                d.x = position[1];
+                d.y = position[0];
+
+        });
+
+        tideScale.domain([d3.min(heights), d3.max(heights)]);
+
+
+        var buildPathFromPoint = function(point) {
+        return "M" + point.cell.join("L") + "Z";
+        };
+        paths.selectAll("path")
+                .data(d3.geom.voronoi(locations))
+                .enter()
+                .append("svg:path").attr("d", function(d) {
+                        console.log(d);
+                        return "M" + d.join(",") + "Z";
+                })
+                .attr("id", function(d, i) {
+                        return "path-" + i;
+                })
+                .attr("clip-path", function(d, i) {
+                        return "url(#clip-" + i + ")";
+                })
+                .style("fill", function(d, i) {
+                        return d3.rgb(0, 255 - (tideScale(d.point.height) * 255), tideScale(d.point.height) * 255);
+                })
+                .style('fill-opacity', 1)
+                .style('stroke-opacity', function(d) {
+                        return tideScale(d.point.height);
+                });
+        //.style("stroke", function(d,i) {  return d3.rgb(200, 200, tideScale(d.point.height)*255);   });
+
+});
