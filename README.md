@@ -6,7 +6,7 @@
  - [ ] sketch frontend
  - [ ] figure out interpolate algo.
          - use RBF
-         
+
              ```python
                 import numpy as np
                 import scipy.interpolate as interpolate
@@ -17,7 +17,7 @@
                 f = interpolate.Rbf(rr[vals], cc[vals], M[vals], function='linear')
                 interpolated = f(rr, cc)
              ```
-             
+
              and play with the possilbe funcitons (and their parameter.)
            - use gaussian processes
 
@@ -31,12 +31,12 @@
              in this case there are oh so much parameters to try out.
 
  - [ ] figure out which kind of vis.
- 
+
          - clusters over map (i.e. hexbins) see fe.x https://www.mapbox.com/blog/heatmaps-and-grids-with-turf/
-         
+
          - smooth overlay (f.ex. http://mourner.github.io/simpleheat/demo/ fast!)
-         
-         - https://github.com/tmcw/chroniton for time slider 
+
+         - https://github.com/tmcw/chroniton for time slider
 
 ##DATA
 
@@ -46,8 +46,8 @@ Data from https://www.tidetimes.org.uk/
 
 ##Architecture
 ```
-┌─────────────┐                                             
-│   Backend   │                                             
+┌─────────────┐
+│   Backend   │
 ├─────────────┴────────────────────────────────────────────┐
 │             ┌──────────────────────────────┐             │
 │             │           Scraper            │             │
@@ -76,8 +76,12 @@ Data from https://www.tidetimes.org.uk/
 │              │                            │              │
 │              └──────────────┬─────────────┘              │
 └─────────────────────────────┼────────────────────────────┘
-                              │                             
-                              │                             
-                              ▼                             
+                              │
+                              │
+                              ▼
 
 ```
+
+
+inspiration
+https://www.youtube.com/watch?v=5zi7N06JXD4
