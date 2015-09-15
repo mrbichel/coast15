@@ -21,6 +21,19 @@ d3.selection.prototype.moveToBack = function() {
         });
 };
 
+function getIndex(t, interp, array) {
+        // bisect returns the   index of the value  that is closer to t from right
+        idx = d3.bisect(array, t) - 1;
+        val = array[idx];
+        dataobject = interp[idx];
+        data = dataobject[val];
+        return data;
+}
+
+//global
+var color = d3.scale.linear();
+var svgPoints;
+
 voronoiMap = function(map, url) {
         var hs = [];
         var pointTypes = d3.map(),
@@ -67,11 +80,11 @@ voronoiMap = function(map, url) {
         };
 
         var draw = function() {
+                // cleans up previous frame
                 d3.select("#voronoi").remove();
                 var max = d3.max(heights);
                 var min = d3.min(heights);
-                var color = d3.scale.linear()
-                        .domain([min, max])
+                color.domain([min, max])
                         .range(["blue", "white", "green"]);
                 // this removes overlay
                 d3.select('#overlay').remove();
@@ -119,7 +132,7 @@ voronoiMap = function(map, url) {
                 var g = svg.append("g")
                         .attr("transform", "translate(" + (-topLeft.x) + "," + (-topLeft.y) + ")");
 
-                var svgPoints = g.attr("class", "points")
+                svgPoints = g.attr("class", "points")
                         .selectAll("g")
                         .data(filteredPoints)
                         .enter().append("g")
@@ -134,7 +147,7 @@ voronoiMap = function(map, url) {
                         .attr("d", buildPathFromPoint)
                         .on('click', selectPoint)
                         .style('fill', function(d) {
-                                return color(d.height);
+                                return color(d[2]);
                         })
                         .style("fill-opacity", 1)
                         .classed("selected", function(d) {
@@ -181,15 +194,51 @@ voronoiMap = function(map, url) {
         }
 
         d3.json(url, function(json) {
-                jpoints = json.locations;
+                var arr = [];
+                for (var k in json) {
+                        for (var key in json[k]) {
+                                arr.push(key);
+                        }
+                }
+                // js wants milliseconds
+                min_time = d3.min(arr);
+                max_time = d3.max(arr);
+                //
+                min_timestamp = new Date(min_time * 1000);
+                max_timestamp = new Date(max_time * 1000);
+                //
+                data = getIndex(min_time, json, arr);
+                jpoints = data;
                 jpoints.forEach(function(point) {
-                        point.latitude = point.latlng[0];
-                        point.longitude = point.latlng[1];
-                        hs.push(point.height);
+                        point.latitude = point[1];
+                        point.longitude = point[0];
+                        hs.push(point[2]);
                 });
                 map.addLayer(mapLayer);
                 points = jpoints;
                 heights = hs;
+                d3.select("#slider")
+                        .append('div')
+                        .call(
+                                chroniton()
+                                .domain([min_timestamp, max_timestamp])
+                                .on('change', function(d) {
+                                        timestamp = d.getTime() / 1000;
+                                                //console.log(Math.floor(timestamp % 10));
+                                        if (Math.floor(timestamp % 10)  === 0) {
+                                                data = getIndex(timestamp, json, arr);
+                                                console.log(timestamp);
+                                                jpoints.forEach(function(point) {
+                                                        hs.push(point[2]);
+                                                });
+                                                heights = hs;
+                                        }
+                                })
+                                .playButton(true)
+                                .playbackRate(0.1)
+                                .play()
+                                .loop(true)
+                        );
         });
         // draw the map
         d3.json("subunits.json", function(mapData) {
@@ -200,4 +249,5 @@ voronoiMap = function(map, url) {
                 }
                 drawMap(mapData);
         });
+
 };
