@@ -1,7 +1,7 @@
 body {
   margin: 0;
   font-family: Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 p {
@@ -160,4 +160,18 @@ p {
 
 .mapbox-control-info {
   display: none !important;
+}
+
+/*// chronitron*/
+#slider {
+        font-family: "ff-bau-web", "Helvetica Neue", Helvetica, Arial, sans-serif;
+        position: absolute;
+        bottom: 0;
+        height: 10vh;
+        width: 100vw;
+        text-align: center;
+}
+.chroniton {
+        outline: none;
+        height: 60px;
 }

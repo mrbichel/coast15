@@ -149,7 +149,7 @@ voronoiMap = function(map, url) {
                         .style('fill', function(d) {
                                 return color(d[2]);
                         })
-                        .style("fill-opacity", 1)
+                        .style("fill-opacity", 0.1)
                         .classed("selected", function(d) {
                                 return lastSelectedPoint == d;
                         });
@@ -217,6 +217,7 @@ voronoiMap = function(map, url) {
                 map.addLayer(mapLayer);
                 points = jpoints;
                 heights = hs;
+                var rate = 10;
                 d3.select("#slider")
                         .append('div')
                         .call(
@@ -224,18 +225,28 @@ voronoiMap = function(map, url) {
                                 .domain([min_timestamp, max_timestamp])
                                 .on('change', function(d) {
                                         timestamp = d.getTime() / 1000;
-                                                //console.log(Math.floor(timestamp % 10));
-                                        if (Math.floor(timestamp % 10)  === 0) {
+                                        //console.log(Math.floor(timestamp % 10));
+                                        // TODO figure this out 
+                                        // need  to update  the data bind to the svgs
+                                        if (Math.floor(timestamp % rate) === 0) {
                                                 data = getIndex(timestamp, json, arr);
-                                                console.log(timestamp);
                                                 jpoints.forEach(function(point) {
                                                         hs.push(point[2]);
                                                 });
+                                                // NOTE to make this work the draw func 
+                                                // may need some refactoring
                                                 heights = hs;
+                                                svgPoints.selectAll("paths")
+                                                        .data(hs)
+                                                        .style('fill', "red");
+                                                               //function(d) {
+                                                                //return color(d[2]);
+                                                        //});
+
                                         }
                                 })
                                 .playButton(true)
-                                .playbackRate(0.1)
+                                .playbackRate(1/rate)
                                 .play()
                                 .loop(true)
                         );

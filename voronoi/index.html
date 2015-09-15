@@ -8,6 +8,7 @@
         <!--magic csss tricks in thereh-->
         <link href='https://api.tiles.mapbox.com/mapbox.js/v1.6.3/mapbox.css' rel='stylesheet' />
         <script src="http://cdn.leafletjs.com/leaflet-0.7.5/leaflet.js"></script>
+        <script src="./libraries/chroniton.js"></script>
 </head>
 
 <body>
@@ -17,6 +18,8 @@
         </div>
         <div id='selected'>
                 <h1>Tide stations</h1>
+        </div>
+        <div id="slider">
         </div>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.8/d3.min.js"></script>
         <script src="main.js"></script>
@@ -30,7 +33,7 @@
                 // nuke attributes variable, clean mapping
                 L.Control.Attribution.prototype.options.prefix = '';
 
-                url = 'points.json';
+                url = 'time.json';
                 voronoiMap(map, url);
         </script>
 </body>
