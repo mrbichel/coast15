@@ -1,3 +1,9 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#  2015 giulio <giulioungaretti@me.com> jhoan <public@jhoan.cc>
+"""
+scrape le data
+"""
 from bs4 import BeautifulSoup
 import requests
 import requests_cache

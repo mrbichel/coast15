@@ -201,7 +201,8 @@ d3.json("data/uk.json", function(error, uk) {
 
           paths.selectAll("path")
       .data(d3.geom.voronoi(locations))
-    .enter().append("svg:path").attr("d", function(d) { return "M" + d.join(",") + "Z"; })
+    .enter().append("svg:path").attr("d", function(d) { console.log(d)
+            return "M" + d.join(",") + "Z"; })
       .attr("id", function(d,i) {
         return "path-"+i; })
       .attr("clip-path", function(d,i) { return "url(#clip-"+i+")"; })
