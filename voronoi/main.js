@@ -127,7 +127,7 @@ voronoiMap = function(map, url) {
                         .style("height", map.getSize().y + 'px')
                         .style("margin-left", topLeft.x + "px")
                         .style("margin-top", topLeft.y + "px");
-                //  move it to back 
+                //  move it to back
                 svg.moveToBack();
                 var g = svg.append("g")
                         .attr("transform", "translate(" + (-topLeft.x) + "," + (-topLeft.y) + ")");
@@ -183,8 +183,8 @@ voronoiMap = function(map, url) {
                         return {
                                 weight: 0,
                                 opacity: 1,
-                                color: '#E9DAC8',
-                                fillOpacity: 0.9,
+                                color: 'black',
+                                fillOpacity: 1,
                         };
                 }
 
@@ -226,14 +226,14 @@ voronoiMap = function(map, url) {
                                 .on('change', function(d) {
                                         timestamp = d.getTime() / 1000;
                                         //console.log(Math.floor(timestamp % 10));
-                                        // TODO figure this out 
+                                        // TODO figure this out
                                         // need  to update  the data bind to the svgs
                                         if (Math.floor(timestamp % rate) === 0) {
                                                 data = getIndex(timestamp, json, arr);
                                                 jpoints.forEach(function(point) {
                                                         hs.push(point[2]);
                                                 });
-                                                // NOTE to make this work the draw func 
+                                                // NOTE to make this work the draw func
                                                 // may need some refactoring
                                                 heights = hs;
                                                 svgPoints.selectAll("paths")
