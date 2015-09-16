@@ -26,8 +26,8 @@ function getIndex(t, interp, array) {
         idx = d3.bisect(array, t) - 1;
         val = array[idx];
         dataobject = interp[idx];
-        data = dataobject[val];
-        return data;
+        _data = dataobject[val];
+        return _data;
 }
 
 // Globally accesible
@@ -92,6 +92,11 @@ voronoiMap = function() {
 
                 // map the points into the right space
                 filteredPoints = locations.filter(function(d) {
+
+                        if(d.bad === true) {
+                            return false;
+                        }
+
                         var latlng = new L.LatLng(d.lat, d.lng);
 
                         if (!drawLimit.contains(latlng)) {
@@ -131,6 +136,7 @@ voronoiMap = function() {
                         .selectAll("g")
                         .data(filteredPoints)
                         .enter().append("g")
+                        .on("click", function(d) { console.log(d);})
                         .attr("class", "point");
 
                 var buildPathFromPoint = function(point) {
@@ -145,6 +151,7 @@ voronoiMap = function() {
                         .style('fill', function(d) {
                                 return colorScale(d.h);
                         })
+                        .on("click", function(d) { console.log(d);})
                         .style("fill-opacity", 1);
 
                 // also map the points
@@ -205,6 +212,8 @@ voronoiMap = function() {
                 max_timestamp = new Date(max_time * 1000);
 
                 data = getIndex(min_time, json, arr);
+                dataMax = getIndex(max_time, json, arr);
+
                 pI = 0;
 
                 data.forEach(function(point) {
@@ -214,7 +223,15 @@ voronoiMap = function() {
                         p.lat = point[1];
                         p.lng = point[0];
                         p.h = point[2];
-                        hs.push(point[2]);
+
+                        p.bad = false;
+
+                        if(dataMax[pI][2] > point[2] - 0.25 && dataMax[pI][2] < point[2] + 0.25 ) {
+                            console.log("Check data from: " + point);
+                            p.bad = true;
+                        }
+
+
                         pI++;
 
                         locations.push(p);
