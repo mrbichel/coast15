@@ -1,0 +1,25 @@
+{
+  "name": "Coast 2015",
+  "version": "0.0.0",
+  "homepage": "http://coast.johan.cc",
+  "authors": [
+    "Johan Bichel Lindegaard <public@johan.cc>"
+  ],
+  "license": "",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "d3": "~3.5.6",
+    "q": "~2.0.2",
+    "topojson": "~1.6.19",
+    "turf": "~2.0.2",
+    "leaflet": "~0.7.5",
+    "Leaflet.heat": "*"
+  }
+}
