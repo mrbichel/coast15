@@ -30,16 +30,26 @@ function getIndex(t, interp, array) {
         return data;
 }
 
-//global
-var color = d3.scale.linear();
-var svgPoints;
+// Globally accesible
+data = {};
+locations = {};
+filteredPoints = [];
 
-voronoiMap = function(map, url) {
+voronoiMap = function() {
+
+        url = '../data/test/time_interpolated_1442233577.0.json';
+
+        // create the leaflet map, centered in the center of uk
+        map = L.map('map', {
+                    'zoomControl': true,
+                    'attributionControl': false,
+        }).setView([56, -4], 6);
+
+        console.log("load");
+
         var hs = [];
-        var pointTypes = d3.map(),
-                heights = [],
-                points = [],
-                lastSelectedPoint;
+        locations = [];
+        var colorScale = d3.scale.linear();
 
         var voronoi = d3.geom.voronoi()
                 .x(function(d) {
@@ -48,24 +58,6 @@ voronoiMap = function(map, url) {
                 .y(function(d) {
                         return d.y;
                 });
-
-        // this allows us to make the poppy ups
-        var selectPoint = function() {
-                d3.selectAll('.selected').classed('selected', false);
-
-                var cell = d3.select(this),
-                        point = cell.datum();
-
-                lastSelectedPoint = point;
-                cell.classed('selected', true);
-
-                d3.select('#selected h1')
-                        .html('')
-                        .append('a')
-                        .text(point.name)
-                        .attr('href', point.url)
-                        .attr('target', '_blank');
-        };
 
         // load the map/data stuff below an hide
         var drawWithLoading = function(e) {
@@ -79,13 +71,16 @@ voronoiMap = function(map, url) {
                 }, 0);
         };
 
+        // todo update with new data
+        colorScale.domain([-0.2, 4, 14])
+                        .range(["black", "cyan", "white"]);
+
         var draw = function() {
                 // cleans up previous frame
+                console.log("redraw");
+
                 d3.select("#voronoi").remove();
-                var max = d3.max(heights);
-                var min = d3.min(heights);
-                color.domain([min, max])
-                        .range(["blue", "white", "green"]);
+
                 // this removes overlay
                 d3.select('#overlay').remove();
 
@@ -96,8 +91,8 @@ voronoiMap = function(map, url) {
                         drawLimit = bounds.pad(0.4);
 
                 // map the points into the right space
-                filteredPoints = points.filter(function(d) {
-                        var latlng = new L.LatLng(d.latitude, d.longitude);
+                filteredPoints = locations.filter(function(d) {
+                        var latlng = new L.LatLng(d.lat, d.lng);
 
                         if (!drawLimit.contains(latlng)) {
                                 return false;
@@ -144,15 +139,13 @@ voronoiMap = function(map, url) {
 
                 svgPoints.append("path")
                         .attr("class", "point-cell")
+                        .attr("id", function(d) { return d.uid;})
+                        .datum(function(d) { return d;})
                         .attr("d", buildPathFromPoint)
-                        .on('click', selectPoint)
                         .style('fill', function(d) {
-                                return color(d[2]);
+                                return colorScale(d.h);
                         })
-                        .style("fill-opacity", 0.1)
-                        .classed("selected", function(d) {
-                                return lastSelectedPoint == d;
-                        });
+                        .style("fill-opacity", 1);
 
                 // also map the points
                 //svgPoints.append("circle")
@@ -174,6 +167,7 @@ voronoiMap = function(map, url) {
                         drawWithLoading();
                 }
         };
+
         var geojsonLayer;
         // control geojson map
         function drawMap(geojson) {
@@ -203,21 +197,34 @@ voronoiMap = function(map, url) {
                 // js wants milliseconds
                 min_time = d3.min(arr);
                 max_time = d3.max(arr);
-                //
+
+                console.log(min_time);
+                console.log(max_time);
+
                 min_timestamp = new Date(min_time * 1000);
                 max_timestamp = new Date(max_time * 1000);
-                //
+
                 data = getIndex(min_time, json, arr);
-                jpoints = data;
-                jpoints.forEach(function(point) {
-                        point.latitude = point[1];
-                        point.longitude = point[0];
+                pI = 0;
+
+                data.forEach(function(point) {
+                        p = {};
+
+                        p.uid = pI;//""+point[1]+point[0];
+                        p.lat = point[1];
+                        p.lng = point[0];
+                        p.h = point[2];
                         hs.push(point[2]);
+                        pI++;
+
+                        locations.push(p);
                 });
+
                 map.addLayer(mapLayer);
-                points = jpoints;
+
                 heights = hs;
-                var rate = 10;
+                var rate = 2;
+
                 d3.select("#slider")
                         .append('div')
                         .call(
@@ -225,23 +232,26 @@ voronoiMap = function(map, url) {
                                 .domain([min_timestamp, max_timestamp])
                                 .on('change', function(d) {
                                         timestamp = d.getTime() / 1000;
-                                        //console.log(Math.floor(timestamp % 10));
-                                        // TODO figure this out
-                                        // need  to update  the data bind to the svgs
+
+
                                         if (Math.floor(timestamp % rate) === 0) {
+
+                                                hs = [];
                                                 data = getIndex(timestamp, json, arr);
-                                                jpoints.forEach(function(point) {
-                                                        hs.push(point[2]);
+
+                                                locations.forEach(function(p) {
+                                                        p.h = data[p.uid][2];
                                                 });
-                                                // NOTE to make this work the draw func
-                                                // may need some refactoring
+
                                                 heights = hs;
-                                                svgPoints.selectAll("paths")
-                                                        .data(hs)
-                                                        .style('fill', "red");
-                                                               //function(d) {
-                                                                //return color(d[2]);
-                                                        //});
+
+                                                d3.selectAll(".point-cell")
+                                                        .data(filteredPoints)
+                                                        .style('fill',
+                                                               function(d) {
+                                                                //console.log(d);
+                                                                return colorScale(d.h);
+                                                        });
 
                                         }
                                 })
@@ -262,3 +272,11 @@ voronoiMap = function(map, url) {
         });
 
 };
+
+
+
+
+// nuke attributes variable, clean mapping
+L.Control.Attribution.prototype.options.prefix = '';
+
+voronoiMap();

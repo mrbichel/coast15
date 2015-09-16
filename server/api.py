@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#  2015 giulio <giulioungaretti@me.com> jhoan <public@jhoan.cc>
+#  2015 giulio <giulioungaretti@me.com> johan <public@jhoan.cc>
 """
 main api to query mongodb
 """
