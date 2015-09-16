@@ -56,6 +56,7 @@ d3.json("gridded.json", function(interp) {
         arr = [];
         for (var k in interp) {
                 for (var key in interp[k]) {
+                        console.log(interp[k][key]);
                         arr.push(key);
                 }
         }
