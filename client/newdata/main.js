@@ -1,12 +1,3 @@
-d3.selection.prototype.moveToBack = function() {
-        return this.each(function() {
-                var firstChild = this.parentNode.firstChild;
-                if (firstChild) {
-                        this.parentNode.insertBefore(this, firstChild);
-                }
-        });
-};
-
 // Globally accesible
 var locations = [];
 
@@ -30,9 +21,10 @@ var projection = d3.geo.albers()
 
 var center = projection([0, 55.4]);
 
-var colorScale = d3.scale.linear();
-colorScale.domain([-0.2, 4, 14])
-                    .range(["black", "cyan", "white"]);
+
+var tideScale = d3.scale.linear();
+tideScale.domain([-0.2, 14]);
+                    //.range(["black", "cyan", "white"]);
 
 var path = d3.geo.path().projection(projection);
 
@@ -57,56 +49,71 @@ svg
     .call(zoom)
     .call(zoom.event);
 
-//var vector = svg.append("path");
 
-var bisect = d3.bisector(function(d) { return d[0]; }).right;
+var bisect = d3.bisector(function(d) { return d.timestamp; }).right;
 
 var interpolateHeightsForTime = function(t) {
 
     locations.forEach(function(d) {
 
+        if(!d.next || t > d.next.timestamp || !d.prev || t < d.prev.timestamp) {
+            id = bisect(d.logs, t);
+            d.prev = d.logs[id-1];
+            d.next = d.logs[id];
+        }
+
         //id = d3.bisect(d.logs, timestamp);
-        id = bisect(d.logs, t);
-
-        prevLog = d.logs[id-1];
-        nextLog = d.logs[id];
-        if(nextLog && prevLog) {
-
-            // TODO: only instantiate a new interpolator if we have new end points
-            interpolate = d3.interpolateNumber(prevLog[1], nextLog[1]);
-
-            tD = nextLog[0] - prevLog[0];
-            nW = (t-prevLog[0]) / tD;
-
-            d.nw = nW;
-
-            //interpHeight = n['height'] * nWeight + b['height'] * bWeight
-            //interpolate();
-            d.height = interpolate(nW);
+        if(d.next && d.prev) {
+            interpolate = d3.interpolateNumber(d.prev.height, d.next.height);
+            delta = d.next.timestamp - d.prev.timestamp;
+            weight = (t-d.prev.timestamp) / delta;
+            d.height = interpolate(weight);
+        } else {
+            d.height = null;
         }
 
     });
 };
 
 d3.json("http://127.0.0.1:5000/cloc", function(json) {
-        console.log(json);
 
         json.locations.forEach(function(d) {
-                d.key = d[0];
-                d.point = d[1];
-                d.name = d[2];
-                var position = projection(d.point);
+
+                l = [];
+                l.key = d[0];
+                l.point = d[1];
+                l.name = d[2];
+                var position = projection(l.point);
                 //d[0] = position[0];
                 //d[1] = position[1];
 
-                d.x = position[0];
-                d.y = position[1];
+                l.x = position[0];
+                l.y = position[1];
 
-                d.logs = d[3];
+                l.logs = [];
+                d[3].forEach(function(log) {
+                    ll = [];
+                    ll.timestamp = log[0];
+                    ll.height = log[1];
+                    ll.type = log[2];
 
-                locations.push(d);
-                d.height = 2;
+                    l.logs.push(ll);
+                });
+
+                _a = function(d) {
+                    return d.timestamp;
+                };
+
+                l.start_time = d3.min(l.logs, _a);
+                l.end_time = d3.max(l.logs, _a);
+
+                locations.push(l);
         });
+
+        var start_time = d3.max(locations, function(d) {
+                    return d.start_time; });
+        var end_time = d3.min(locations, function(d) {
+                    return d.end_time; });
 
         var ports = g.selectAll("circle")
             .data(locations, function(d) { return d.key; })
@@ -121,18 +128,26 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
             return "translate(" + projection(d.point) + ")";
           });
         time = Date.now();
+
         var update = function() {
-
-            time+=400000;
-
-            interpolateHeightsForTime(time);
-
-            //console.log(locations[0].height);
-            // interpolate a height value attached to the location
 
             ports = d3.selectAll(".port")
                 .data(locations)
-                .attr("r", function(d) { return d.height; } );
+                .attr("r", function(d) {
+
+                    if(d.height) {
+                        return tideScale(d.height)*20;
+                    }
+                    return 4;
+
+                })
+                .attr("fill",  function(d) {
+                    if(d.height) {
+                        return "blue";
+                    } else {
+                        return "red";
+                    }
+                });
 
            // ports.transition()
            // .attr("r", function(d) { return Math.random(60);} );
@@ -150,6 +165,21 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
         };
 
         d3.timer(update, 20);
+
+
+        d3.select("#slider")
+            .append('div')
+            .call(chroniton()
+                .domain([start_time, end_time])
+                .on('change', function(d) {
+                    interpolateHeightsForTime(d.getTime());
+                })
+                .playButton(true)
+                .playbackRate(1/20)
+                .play()
+                .loop(true)
+            );
+
 
     });
 
