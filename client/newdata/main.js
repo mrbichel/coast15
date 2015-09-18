@@ -110,10 +110,10 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                 locations.push(l);
         });
 
-        var start_time = d3.max(locations, function(d) {
-                    return d.start_time; });
-        var end_time = d3.min(locations, function(d) {
-                    return d.end_time; });
+        var start_time = new Date(d3.max(locations, function(d) {
+                    return d.start_time; }));
+        var end_time = new Date(d3.min(locations, function(d) {
+                    return d.end_time; }));
 
         var ports = g.selectAll("circle")
             .data(locations, function(d) { return d.key; })
@@ -175,7 +175,7 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                     interpolateHeightsForTime(d.getTime());
                 })
                 .playButton(true)
-                .playbackRate(1/20)
+                .playbackRate(1/2)
                 .play()
                 .loop(true)
             );
