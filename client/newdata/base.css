@@ -1,7 +1,11 @@
 body {
   margin: 0;
+  padding:0;
   font-family: Helvetica, Arial, sans-serif;
   font-size: 15px;
+  background: #eee;
+  scroll: no;
+  overflow: hidden;
 }
 
 p {
@@ -10,7 +14,6 @@ p {
 }
 
 svg {
-  background: #eee;
 }
 
 .overlay {
@@ -28,4 +31,79 @@ svg {
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
+}
+
+#slider {
+    width: 100%;
+    height: 60px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+}
+
+#slider div {
+
+}
+
+.chroniton {
+  font: 10px sans-serif;
+  outline:none;
+
+}
+.chroniton .play-button {
+  fill:#444;
+
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.x.axis, .slider text {
+  -webkit-user-select:none;
+  -moz-user-select:none;
+  user-select:none;
+}
+.x.axis path.domain {
+  stroke-width:10;
+  stroke-linecap:round;
+  stroke:#ddd;
+}
+.x.axis path.halo {
+  stroke-width:12;
+  stroke-linecap:round;
+  stroke:#ccc;
+}
+.tick line {
+  stroke:#a0a0a0;
+  stroke-width:1;
+  transform:translate(0px, -5px);
+}
+.tick text {
+    display: none;
+}
+.slider .handle {
+  fill: #fff;
+  stroke-width:1;
+  stroke:#333;
+}
+.slider .handle, .slider text {
+  cursor: move;
+  cursor: -webkit-grab;
+  transition:fill 200ms ease-in-out;
+}
+.handle:active, .slider text:active {
+  cursor: move;
+  cursor: -moz-grabbing;
+  cursor: -webkit-grabbing;
+}
+.slider.brushing .handle {
+  fill: #eee;
+}
+.label {
+  font:bold 12px sans-serif;
+  display: none;
 }

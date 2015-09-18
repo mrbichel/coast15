@@ -1,8 +1,8 @@
 // Globally accesible
 var locations = [];
 
-var width = window.innerWidth,
-    height = window.innerHeight;
+var width = window.innerWidth-2,
+    height = window.innerHeight-2;
 
 var scale,
     translate,
@@ -21,17 +21,11 @@ var projection = d3.geo.albers()
 
 var center = projection([0, 55.4]);
 
-
 var tideScale = d3.scale.linear();
 tideScale.domain([-0.2, 14]);
                     //.range(["black", "cyan", "white"]);
 
 var path = d3.geo.path().projection(projection);
-
-var voronoi = d3.geom.voronoi()
-.x(function(d) { return d.x; })
-.y(function(d) { return d.y; })
-.clipExtent([[0, 0], [width, height]]);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
@@ -49,6 +43,25 @@ svg
     .call(zoom)
     .call(zoom.event);
 
+var voronoi = d3.geom.voronoi()
+    .x(function(d) { return d.x; })
+    .y(function(d) { return d.y; });
+
+
+var filter = svg.append("defs")
+  .append("filter")
+    .attr("id", "blur")
+  .append("feGaussianBlur")
+    .attr("stdDeviation", 5);
+
+function blur() {
+  filter.attr("stdDeviation", 1);
+}
+
+var colorScale = d3.scale.linear();
+        // todo update with new data
+colorScale.domain([-0.2, 4, 14])
+    .range(["black", "cyan", "white"]);
 
 var bisect = d3.bisector(function(d) { return d.timestamp; }).right;
 
@@ -81,11 +94,10 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
 
                 l = [];
                 l.key = d[0];
-                l.point = d[1];
+                l.loc = d[1];
                 l.name = d[2];
-                var position = projection(l.point);
-                //d[0] = position[0];
-                //d[1] = position[1];
+
+                var position = projection(l.loc);
 
                 l.x = position[0];
                 l.y = position[1];
@@ -115,70 +127,115 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
         var end_time = new Date(d3.min(locations, function(d) {
                     return d.end_time; }));
 
-        var ports = g.selectAll("circle")
-            .data(locations, function(d) { return d.key; })
+        voronoi(locations).forEach(function(d) {
+                        d.point.cell = d;
+                });
+
+        svgPoints = g.append('g').attr("id", "voro-points")
+            //.attr("filter", "url(#blur)")
+            .selectAll("g")
+            .data(locations)
+            .enter().append("g")
+            .on("click", function(d) { console.log(d);})
+            .attr("class", "point");
+
+
+        svgPoints.append("path")
+            .attr("class", "point-cell")
+            .attr("d", function(d) {
+                if(d.cell){
+                    return d.cell.length ? "M" + d.cell.join("L") + "Z" : null;
+                }
+            })
+            .style("fill-opacity", 1);
+
+        var ports = g.append('g')
+            .attr("id", "locations")
+            .selectAll("circle")
+            .data(locations)
             .enter()
             .append("circle")
             .attr("class", "port")
-            .datum(function(d) { return d;})
-            .attr("id", function(d) { return d.key; })
-            .attr("r", 2)
-            .attr("color", "black")
             .attr("transform", function(d) {
-            return "translate(" + projection(d.point) + ")";
-          });
-        time = Date.now();
+                return "translate(" + d.x + "," + d.y + ")";
+            });
+
+
+        var time_change = true;
+
+        var rate = 10;
+        var chron = chroniton()
+                .width(width-60).height(50)
+                .tapAxis(function(axis) {
+                    axis.ticks(48);
+                    axis.orient("bottom");
+                    axis.tickPadding(0);
+                })
+                .domain([start_time, end_time])
+                .on('change', function(d) {
+                    time_change = true;
+                })
+                .playButton(false)
+                .playbackRate(1/rate)
+                .play()
+                .loop(true);
+
+
 
         var update = function() {
 
-            ports = d3.selectAll(".port")
-                .data(locations)
-                .attr("r", function(d) {
+            if(time_change) {
+                interpolateHeightsForTime(chron.getValue().getTime())
+                time_change = false;
 
-                    if(d.height) {
-                        return tideScale(d.height)*20;
-                    }
-                    return 4;
+                ports = d3.selectAll(".port")
+                    .data(locations)
+                    .attr("r", function(d) {
 
-                })
-                .attr("fill",  function(d) {
-                    if(d.height) {
-                        return "blue";
-                    } else {
-                        return "red";
-                    }
-                });
+                        //if(d.height) {
+                        //    return tideScale(d.height)*2;
+                        //}
+                        return 2;
 
-           // ports.transition()
-           // .attr("r", function(d) { return Math.random(60);} );
+                    })
+                    .attr("stroke",  function(d) {
+                        if(d.height) {
+                            return "white";
+                        } else {
+                            return "red";
+                        }
+                    })
+                    .attr("fill", 'none');
 
-            /*d3.selectAll("port")
-            .data(locations, function(d) { return d.key; })
-            .enter()
-            .append("circle")
-            .attr("r", Math.random(10))
-            .attr("color", "black")
-            .attr("transform", function(d) {
-                return "translate(" + projection(d.point) + ")";
-              });*/
-
+                d3.selectAll(".point-cell")
+                    .data(locations)
+                    .style('fill',
+                           function(d) {
+                            //console.log(d);
+                            return colorScale(d.height);
+                    });
+            }
         };
 
-        d3.timer(update, 20);
+        d3.timer(update, 100);
 
 
         d3.select("#slider")
             .append('div')
-            .call(chroniton()
-                .domain([start_time, end_time])
-                .on('change', function(d) {
-                    interpolateHeightsForTime(d.getTime());
-                })
-                .playButton(true)
-                .playbackRate(1/2)
-                .play()
-                .loop(true)
-            );
+            .call(chron);
+
+        d3.select("#slider")
+            .attr("width", width-60)
+            .style({"left": "30px"});
+
+        d3.select(".chroniton")
+            .attr("transform", "translate(0,-16)")
+            /*.on("click", function() {
+                console.log(chron)
+                if( chron.playing() ) {
+                    chron.pause();
+                }
+            });*/
 
 
     });

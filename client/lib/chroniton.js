@@ -1,13 +1,13 @@
 
-var handleRadius = 6,
+var handleRadius = 12,
   handleHeight = 8,
   caretHeight = 5,
   handleD = 'M' + [
     -handleRadius, -handleHeight,
     handleRadius, -handleHeight,
-    handleRadius, handleHeight - caretHeight,
+    handleRadius, handleHeight,
     0, handleHeight,
-    -handleRadius, handleHeight - caretHeight,
+    -handleRadius, handleHeight,
     -handleRadius, -handleHeight].join(','),
   playWidth = 10,
   playD = 'M' + [
@@ -132,7 +132,7 @@ function chroniton() {
 
       var slider = g.append('g')
         .attr('class', 'slider')
-        .attr('transform', 'translate(' + [0, height - margin.bottom - margin.top + 2] + ')')
+        .attr('transform', 'translate(' + [0, height - margin.bottom - margin.top + 0] + ')')
         .call(brush);
 
       var handle = slider.append('path')
