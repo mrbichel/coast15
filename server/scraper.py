@@ -101,13 +101,6 @@ for day in range(-5,5):
     get_data_for_date(datetime.today() + timedelta(days=day))
 
 
-
-
-
-
-
-
-
 #### example table result
 # Hi/Lo
 # Time
@@ -127,8 +120,6 @@ for day in range(-5,5):
 ###
 
 
-
-
 # mongo database
 # model: location
 #    - lat
@@ -142,17 +133,13 @@ for day in range(-5,5):
 #     - type [HIGH, LOW, MEASURE]
 #     - water level in meters
 
-
 # get tide locations
 
 # update tidetimes for day
 
 # run a cron job to update the tide times for each lcoation every day
 
-
-
 # Function getEntriesForDay
-
 
 # location.getWaterLevelForTime
 
