@@ -1,0 +1,24 @@
+body {
+    margin: 0;
+}
+
+svg {
+  background: #eee;
+}
+
+.overlay {
+  fill: none;
+  pointer-events: all;
+}
+
+.land {
+  fill: #000;
+}
+
+.boundary {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
