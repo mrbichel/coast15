@@ -123,7 +123,7 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
         time = Date.now();
         var update = function() {
 
-            time+=36000;
+            time+=400000;
 
             interpolateHeightsForTime(time);
 
