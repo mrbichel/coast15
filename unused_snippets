@@ -1,0 +1,42 @@
+   d3.json("http://127.0.0.1:5000/cloc_data", function(json) {
+
+                json.logs.forEach(function(d) {
+                        console.log(d);
+
+                        locations.forEach(function(l) {
+                            if(d[0] == l.key) {
+                                l.logs = d[1];
+                            }
+                        });
+
+                        /*d.uid = d[0];
+                        d.point = d[1];
+                        d.name = d[2];
+                        var position = projection(d.point);
+                        //d[0] = position[0];
+                        //d[1] = position[1];
+
+                        d.x = position[0];
+                        d.y = position[1];
+
+                        locations.push(d);*/
+                });
+
+                console.log(locations);
+
+                d3.timer(update, 10000);
+        });
+
+
+
+
+
+        noBefore = true;
+        noAfter = true;
+        d.logs.forEach(function(l){
+            if(timestamp > l[0]) noBefore = false;
+            if(timestamp < l[0]) noAfter = false;
+        });
+
+        if(noBefore) console.log("noBefore");
+        if(noBefore) console.log("noAfter");
