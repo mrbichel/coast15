@@ -154,17 +154,7 @@ voronoiMap = function() {
                         .on("click", function(d) { console.log(d);})
                         .style("fill-opacity", 1);
 
-                // also map the points
-                //svgPoints.append("circle")
-                //.attr("transform", function(d) {
-                //return "translate(" + d.x + "," + d.y + ")";
-                //})
-                //// use this if we want to fill the color
-                //// NOTE can be defined per point
-                //.style('fill', function(d) {
-                //return '#' + d.color;
-                //})
-                //.attr("r", 2);
+
         };
 
         // this is the magic that allows easy linked zooming and panning
@@ -289,8 +279,6 @@ voronoiMap = function() {
         });
 
 };
-
-
 
 
 // nuke attributes variable, clean mapping

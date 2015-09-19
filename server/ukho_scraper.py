@@ -171,14 +171,7 @@ def update_tide_data():
                 }
             )
 
-           # for log in fetch_data['logs']:
-           #     if log['timestamp']:
-           #         tide_logs.update_one({"timestamp": log['timestamp'], "location": location['_id']},
-           #                 {"$set": log }, True) #upsert
-
-
 def scan_all_ports():
-
     ports = []
     for i in range(1,9999):
         # port_ids may have letters - we are missing those e.g. 0176A
@@ -200,53 +193,6 @@ def scan_all_ports():
     #f.write(json.dumps(ports))
     #f.close()
 
-def merge_tidetimes_locations():
-    for loc in locations.find({u'port_id': None}):
-        #print loc;
-        locations.update_one({'_id': loc['_id']}, {"$set": {
-                    "source": "tidetimes"}})
-
-        #locs = locations.find({"name": loc["name"]})
-        #if locs.count() > 1:
-           # print locs[0]
-            #print locs[1]
-
-            #if locs[1]['_id'] is not loc['_id']:
-            #
-            #   locations.update_one({'_id': loc['_id']}, {"$set": {
-            #        "country": locs[1]["country"],
-            #        "port_id": locs[1]["port_id"],} })
-
-            #   locations.remove({'_id': locs[1]['_id']})
-
-    print locations.count()
-
-def populate_location_data():
-    locs = locations.find({u'latlng': None})
-    print locs.count()
-    url = "https://maps.googleapis.com/maps/api/geocode/json"
-
-    for loc in locs:
-        payload = {"address": "{} {}".format(loc["name"], loc["country"]),
-                   "key": "AIzaSyApa4ZMw-LY5s6i11DxBcivlJB1jzxVKJk"}
-
-        print "gettting location for: {} {}".format(loc["name"], loc["country"])
-        r = requests.get(url, payload)
-        v = r.json()
-        print v
-        if len(v['results']) > 0:
-            res = v['results'][0]
-            latlong = res['geometry']['location']
-            name = res['address_components'][0]['long_name']
-
-            print latlong
-            print name
-
-            locations.update_one({'_id': loc['_id']}, {"$set": {"latlng": [latlong['lat'], latlong['lng']]}})
-
-
-def create_geo_index():
-    locations.create_index([("latlng", GEO2D)])
 
 if __name__ == "__main__":
     update_tide_data()

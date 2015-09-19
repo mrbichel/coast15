@@ -16,6 +16,16 @@ p {
 svg {
 }
 
+#bg {
+}
+
+.point-cell {
+  //fill: none;
+  pointer-events: all;
+  stroke: #fff;
+  stroke-opacity: 1;
+}
+
 .overlay {
   fill: none;
   pointer-events: all;
