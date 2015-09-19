@@ -29,9 +29,9 @@ var svg = d3.select("#map").append("svg")
 var g = svg.append("g");
 
 //svg.append("rect")
-        //.attr("class", "overlay")
-        //.attr("width", width)
-        //.attr("height", height);
+//.attr("class", "overlay")
+//.attr("width", width)
+//.attr("height", height);
 
 svg
         .call(zoom)
@@ -84,10 +84,10 @@ d3.json("../data/headlands.json",
         function(data) {
                 for (var i = 0; i < data.length; i++) {
                         try {
-                        var city = data[i];
-                        point(city);
+                                var city = data[i];
+                                point(city);
                         } catch (err) {
-                        console.log("skip");
+                                console.log("skip");
                         }
                 }
         }
@@ -118,7 +118,15 @@ d3.json("../data/uk.json", function(error, uk) {
 
 });
 
-
+d3.select("#slider")
+        .append('div')
+        .call(
+                chroniton()
+                .on('change', function(d) {})
+                .playButton(true)
+                .play()
+                .loop(true)
+        );
 
 
 function zoomed() {
