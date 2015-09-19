@@ -1,0 +1,47 @@
+body {
+  margin: 0;
+  padding:0;
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 15px;
+  background: #eee;
+  scroll: no;
+  overflow: hidden;
+}
+
+p {
+  margin: 0;
+  margin-bottom: 10px;
+}
+
+svg {
+}
+
+#bg {
+}
+
+/*----------------------------------------------------------------- map*/
+
+
+/*NOTE, I removed this */
+/*.overlay {*/
+  /*fill: none;*/
+  /*pointer-events: all;*/
+/*}*/
+
+.land {
+  fill: #000;
+}
+
+.boundary {
+  fill: none;
+  stroke: #fff;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+
+/*----------------------------------------------------------------- tooltip*/
+.tooltip{
+   color:pink;
+}
