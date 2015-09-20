@@ -15,7 +15,10 @@ p {
 
 svg {
 }
-
+#heatmap{
+    height:100bh;
+    width:100vw;
+}
 #bg {
 }
 
