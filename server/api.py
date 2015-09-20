@@ -88,67 +88,6 @@ def get_coast15_locations():
     return locs
 
 
-## get high and low around time for all coast15 locations
-# Get Locations selected for coast15
-@app.route("/cloc_data")
-def coast_location_data():
-
-    locations = get_coast15_locations()
-
-    ret = []
-    for location in locations:
-        logs = []
-        for log in location['logs']:
-            logs.append([
-                mktime(log['timestamp'].timetuple()),
-                log['height'],
-                log['type']
-                ])
-
-        logs.sort()
-
-        ret.append( [str(location['_id']), logs] )
-
-    return Response(
-        json_util.dumps({'logs' : ret}),
-        mimetype='application/json'
-    )
-
-    #ids = []
-    #for l in locs:
-    #    ids.append(ObjectId(l['_id']))
-
-    #tl = tide_logs.find({
-   #        "location": {"$in": ids},
-   #        "timestamp": {
-   #            "$gte": fromDate,
-   #            "$lt": toDate
-   #        },
-   #        })
-
-    #retAll = {}
-    #for l in locs:
-    #    ret = {}
-#
-    #    tl = tide_logs.find({
-    #        "location": ObjectId(l['_id']),
-    #        "timestamp": {
-    #            "$gte": fromDate,
-    #            "$lt": toDate
-    #        },
-    #        })
-#
-    #    for t in tl:
-    #        ret[mktime(t['timestamp'].timetuple())] = [t['height'], t['type']]
-#
-    #       retAll[str(l['_id'])] = ret
-
-
-
-
-
-# Get Locations in bounds
-
 # Get Locations selected for coast15
 @app.route("/cloc")
 def coast_location():
