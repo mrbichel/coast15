@@ -1,3 +1,4 @@
 coast_shared_data
 tide_cache.sqlite
 bower_components
+*.pyc
