@@ -2,3 +2,6 @@ coast_shared_data
 tide_cache.sqlite
 bower_components
 *.pyc
+ukho_cache.sqlite
+geocode_cache.sqlite
+.idea
