@@ -19,19 +19,9 @@ from scipy.interpolate import interp1d
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import colors, ticker, cm
+from scipy.interpolate import Rbf
 from scipy.interpolate import griddata
-
-
-def translate(value, leftMin, leftMax, rightMin, rightMax):
-    # Figure out how 'wide' each range is
-    leftSpan = leftMax - leftMin
-    rightSpan = rightMax - rightMin
-
-    # Convert the left range into a 0-1 range (float)
-    valueScaled = float(value - leftMin) / float(leftSpan)
-
-    # Convert the 0-1 range into a value in the right range.
-    return rightMin + (valueScaled * rightSpan)
 
 app = Flask(__name__)
 #app = create_app(config="config.yaml")
@@ -41,10 +31,8 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 app.debug = True
 
 client = MongoClient('localhost', 27017)
-
 db = client.uk_tide
 locations = db.locations
-tide_logs = db.tide_logs
 
 
 @app.route("/")
@@ -52,7 +40,7 @@ def hello():
     return "Coast API"
 
 
-def get_coast15_match(fromDate, toDate, bounds=[[48, -46], [63, 5]]): # add bounds here
+def get_coast15_match(fromDate, toDate, bounds=[[48, -26], [64, 10]]): # add bounds here
     coast15_match = {
           "latlng": {
                   #"$exists": True,
@@ -67,19 +55,14 @@ def get_coast15_match(fromDate, toDate, bounds=[[48, -46], [63, 5]]): # add boun
 
     return coast15_match
 
-def get_coast15_locations():
-
-    fromDate = datetime.utcnow() - timedelta(days=4)
-    toDate = datetime.utcnow() + timedelta(days=7)
+def get_coast15_locations(fromDate, toDate):
 
     # todo match log count greater than ?
 
     locs = locations.aggregate([
             {"$match"  : get_coast15_match(fromDate, toDate) },
             {"$unwind" : "$logs"},
-
             {"$match"  : { "logs.timestamp": { "$gte": fromDate, "$lt": toDate }}},
-
             #{"$project": {"logs.timestamp":1}}
             { "$group": {
                 "_id": "$_id",
@@ -87,21 +70,19 @@ def get_coast15_locations():
                 "name" : { "$first": '$name' },
                 "logs": { "$addToSet": "$logs" }
             }},
-
         ]
     )
 
     return locs
 
 
-# Get Locations selected for coast15
+# Get Locations selected for coast15 # from date to date - optional get arguments all
 @app.route("/cloc")
 def coast_location():
 
     fromDate = datetime.utcnow() - timedelta(days=1)
     toDate = datetime.utcnow() + timedelta(days=1)
-
-    locs = get_coast15_locations()
+    locs = get_coast15_locations(fromDate, toDate)
 
     o = []
     for l in locs:
@@ -114,7 +95,6 @@ def coast_location():
                 ])
 
         logs.sort()
-
 
         o.append([
                 str(l['_id']),
@@ -132,35 +112,30 @@ def coast_location():
     )
 
 
-#def find_lt(a, x):
-#    'Find rightmost value less than x'
-#    i = bisect_left(a, x)
-#    if i:
-#        return a[i-1]
-#    raise ValueError
-#
-#def find_le(a, x):
-#    'Find rightmost value less than or equal to x'
-#    i = bisect_right(a, x)
-#    if i:
-#        return a[i-1]
-#    raise ValueError
 
-#http://docs.scipy.org/doc/scipy-0.14.0/reference/tutorial/interpolate.html
+# linear or nearest
+def get_grid_frames(fromDate, toDate, resolution=60*15, method='linear'):
 
-# optimize by not sending lat and lng for every frame, ensure order and existense to match on indexes - maybe just insert empty list elements for bad data
+    # increase range so we clip of then en points as they do not have nice
+    # cubic interpolation curves
+    fr = fromDate-timedelta(days=1)
+    to = toDate+timedelta(days=1)
+    locs = list(get_coast15_locations(fr,to))
 
-@app.route("/grid") #fromDate, toDate, resolution, linear / nearest
-def coast_grid(resolution=60*15): # resolution in seconds
+    newLocs = []
 
-    fromDate = datetime.utcnow() - timedelta(days=0.2)
-    toDate = datetime.utcnow() + timedelta(days=0.2)
+    # todo - db call shuld only return distinct latlng's
+    for loc in locs:
+        u = True
+        for d in locs:
+            if d['_id'] != loc['_id']:
+                if d['latlng'] == loc['latlng']:
+                    u = False
 
-    # TODO: get more values than just from to date to improve the interp1d function
-    locs = list(get_coast15_locations())
+        if u:
+            newLocs.append(loc)
 
     duration = toDate - fromDate;
-
     total_frames = int(math.ceil(duration.total_seconds() / resolution))
 
     frame_times = []
@@ -179,9 +154,9 @@ def coast_grid(resolution=60*15): # resolution in seconds
         values = []
         times = []
 
-    for loc in locs:
-        #print loc
-        logs = sorted(loc['logs'],key=lambda d: d['timestamp']) # todo: this sorting does not work, lets sort already from db
+    for loc in newLocs:
+
+        logs = sorted(loc['logs'],key=lambda d: d['timestamp'])
 
         time_list = []
         height_list = []
@@ -193,9 +168,8 @@ def coast_grid(resolution=60*15): # resolution in seconds
         height_list = np.array(height_list)
 
         if len(time_list) > 4 and len(height_list) > 4:
-
-            f =  interp1d(time_list, height_list)
-            #f2 = interp1d(time_list, height_list, kind='cubic')
+            #f =  interp1d(time_list, height_list)
+            f = interp1d(time_list, height_list, kind='cubic')
 
             # plot for 1 location
             # xnew = np.linspace(time_list[1], time_list[-2], 800)
@@ -212,49 +186,59 @@ def coast_grid(resolution=60*15): # resolution in seconds
                 except ValueError:
                     print "outside of range"
 
-    o = []
-
     for frame in frames:
 
-        points = np.vstack((frame['lng'], frame['lat'])).T
-        values = np.array(frame['v'])
+        frame['points'] = np.vstack((frame['lng'], frame['lat'])).T
+        frame['values'] = np.array(frame['v'])
 
         latMax = np.max(frame['lat']) +1
         latMin = np.min(frame['lat']) -1
         lngMax = np.max(frame['lng']) +1
         lngMin = np.min(frame['lng']) -1
 
-        valMin = np.min(values)
-        valMax = np.max(values)
+        valMin = np.min(frame['values'])
+        valMax = np.max(frame['values'])
 
-        cellsize = 0.5 # 0.2 about 5850 values
+        cellsize = 0.25 # 0.2 about 5850 values -# this should be a parameter
 
         ncol = int(math.ceil(latMax-latMin)) / cellsize
         nrow = int(math.ceil(lngMax-lngMin)) / cellsize
         xres = (latMax - latMin) / float(ncol) #which should get back to original cell size
         yres = (lngMax - lngMin) / float(nrow)
 
-        gridx, gridy = np.mgrid[lngMin:lngMax:ncol*1j, latMin:latMax:nrow*1j]
-        grid_z0 = griddata(points, values, (gridx, gridy), method='nearest')
-        grid_z1 = griddata(points, values, (gridx, gridy), method='linear')
+        frame['gridx'], frame['gridy'] = np.mgrid[lngMin:lngMax:ncol*1j, latMin:latMax:nrow*1j]
 
-        #plt.subplot(211)
-        #plt.imshow(grid_z0.T, extent=(lngMin,lngMax,latMin,latMax), origin='lower')
-        #plt.scatter(frame['lng'],frame['lat'], c=values)
-        #plt.colorbar()
-        #plt.title('Nearest')
-        #plt.subplot(212)
-        #plt.imshow(grid_z1.T, extent=(lngMin,lngMax,latMin,latMax), origin='lower')
-        #plt.scatter(frame['lng'],frame['lat'], c=values)
-        #plt.colorbar()
-        #plt.title('Linear')
-        #plt.gcf().set_size_inches(6, 6)
-        #plt.show()
+        #grid_z0 = griddata(points, values, (gridx, gridy), method='nearest')
+
+        # griddata function is much faster
+        #frame['gridz'] = griddata(frame['points'], frame['values'], (frame['gridx'], frame['gridy']), method=method) #,fill_value=1)
+        #Creating the interpolation function and populating the output matrix value
+
+        rbf = Rbf(frame['lng'], frame['lat'], frame['values'], function=method, smooth=2)
+        frame['gridz'] = rbf(frame['gridx'], frame['gridy'])
+
+        frame['ncol'] = ncol
+        frame['nrow'] = nrow
+
+    return frames
+
+
+@app.route("/grid") #fromDate, toDate, resolution, linear / nearest
+def coast_grid(resolution=60*15): # resolution in seconds
+
+    # todo: snap from time to even multiple of resolution so we can use cached frames
+    fromDate = datetime.utcnow() - timedelta(days=0.2)
+    toDate = datetime.utcnow() + timedelta(days=0.2)
+
+    frames = get_grid_frames(fromDate, toDate, resolution)
+
+    o = []
+    for frame in frames:
 
         f_ret = []
-        vals = grid_z1.ravel()
-        x = gridx.ravel()
-        y = gridy.ravel()
+        vals = frame['gridz'].ravel()
+        x = frame['gridx'].ravel()
+        y = frame['gridy'].ravel()
 
         for idx in range(0,len(vals)):
             if not math.isnan(vals[idx]):
@@ -264,19 +248,63 @@ def coast_grid(resolution=60*15): # resolution in seconds
                         vals[idx]
                     ])
 
-        o.append([frame['t'], f_ret])
+        # todo: cache individual grids by timestamp key
+        # expire on frame['t'] - half duration of frontend viz
+        o.append([ frame['t'], frame['gridz'] ])
 
+    # todo: cache the complete response for resolution
     return Response(
-        json_util.dumps({
-            'frames' : o}),
+        json_util.dumps(o),
         mimetype='application/json'
     )
 
 #def get_coast15_logs():
 
 
+
+def plot_grid():
+
+    fromDate = datetime.utcnow() - timedelta(days=0.2)
+    toDate = datetime.utcnow() + timedelta(days=0.2)
+
+    frames = get_grid_frames(fromDate, toDate)
+
+    frame = frames[0]
+
+    latMax = np.max(frame['lat']) +2
+    latMin = np.min(frame['lat']) -2
+    lngMax = np.max(frame['lng']) +2
+    lngMin = np.min(frame['lng']) -2
+
+    gX, gY, gZ = frame['gridx'].T, frame['gridy'].T, frame['gridz'].T
+
+    X, Y, Z = frame['lng'], frame['lat'], frame['values']
+
+    plt.subplot(411)
+    plt.scatter(frame['lng'],frame['lat'], c=frame['values'])  ##ocean
+    plt.colorbar()
+
+    plt.subplot(412)
+    plt.imshow(frame['gridz'].T, extent=(lngMin,lngMax,latMin,latMax), origin='lower', cmap=cm.ocean)
+    plt.colorbar()
+
+    plt.subplot(413)
+    plt.pcolor(gX, gY, gZ, cmap=cm.GnBu)
+    plt.title('RBF interpolation')
+    plt.colorbar()
+
+    plt.subplot(414)
+    plt.contourf(frame['gridx'].T, frame['gridy'].T, gZ, cmap=cm.GnBu)
+    plt.colorbar()
+    plt.title('Grid')
+
+    plt.gcf().set_size_inches(6, 6)
+    plt.show()
+
+
+
 if __name__ == "__main__":
     app.run(use_debugger=app.debug)
     #coast_grid()
-
+    #plot_grid()
 

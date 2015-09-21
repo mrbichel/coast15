@@ -21,10 +21,6 @@ var projection = d3.geo.albers()
 
 var center = projection([0, 55.4]);
 
-var tideScale = d3.scale.linear();
-tideScale.domain([-0.2, 14]);
-                    //.range(["black", "cyan", "white"]);
-
 var path = d3.geo.path().projection(projection);
 
 var svg = d3.select("body").append("svg")
@@ -66,6 +62,10 @@ var colorScale = d3.scale.linear();
 colorScale.domain([-0.2, 8, 14])
     .range(["black", "cyan", "white"]);
 
+var tideScale = d3.scale.linear();
+tideScale.domain([-0.2, 14]);
+                    //.range(["black", "cyan", "white"]);
+
 var bisect = d3.bisector(function(d) { return d.timestamp; }).right;
 
 var interpolateHeightsForTime = function(t) {
@@ -76,14 +76,48 @@ var interpolateHeightsForTime = function(t) {
             id = bisect(d.logs, t);
             d.prev = d.logs[id-1];
             d.next = d.logs[id];
+
+            if(d.next && d.prev) {
+
+            }
+
         }
 
         //id = d3.bisect(d.logs, timestamp);
         if(d.next && d.prev) {
+
+             //d.low = d3.min([d.prev.height, d.next.height]);
+            //    d.high = d3.max([d.prev.height, d.next.height]);
+
+            //d.heightScale.domain([d.low, d.low*1.01, d.high*0.99, d.high])
+            //    .range(0,0.4,0.6,1);
+
+
             interpolate = d3.interpolateNumber(d.prev.height, d.next.height);
+
             delta = d.next.timestamp - d.prev.timestamp;
             weight = (t-d.prev.timestamp) / delta;
             d.height = interpolate(weight);
+
+            d.high_flag = false;
+            d.low_flag = false;
+
+            if(weight>0.99) {
+                if (d.next.type == "high") {
+                    d.high_flag = true;
+                } else {
+                    d.low_flag = true;
+                }
+            }
+
+            if(weight<0.01) {
+                if (d.prev.type == "high") {
+                    d.high_flag = true;
+                } else {
+                    d.low_flag = true;
+                }
+            }
+
         } else {
             d.height = null;
         }
@@ -97,13 +131,13 @@ var interpolateHeightsForTime = function(t) {
 
 d3.json("../data/uk.json", function(error, uk) {
 
-    var subunits = topojson.feature(uk, uk.objects.subunits);
+   /* var subunits = topojson.feature(uk, uk.objects.subunits);
      midLayer.append('g').attr("id", "uk-map")
         .selectAll(".subunit")
         .data(topojson.feature(uk, uk.objects.subunits).features)
         .enter().append("path")
         .attr("class", function(d) { return "subunit " + d.id; })
-        .attr("d", path);
+        .attr("d", path);*/
 
 });
 
@@ -140,6 +174,9 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                 l.start_time = d3.min(l.logs, _a);
                 l.end_time = d3.max(l.logs, _a);
 
+                l.heightScale = d3.scale.linear().domain([-0.2,14])
+                    .range(0,1);
+
                 locations.push(l);
         });
 
@@ -152,7 +189,7 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                         d.point.cell = d;
                 });
 
-        var voroPoints = bgLayer.append('g').attr("id", "voropoints")
+        /*var voroPoints = bgLayer.append('g').attr("id", "voropoints")
 
             .selectAll("g")
             .data(locations)
@@ -167,9 +204,9 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                     return d.cell.length ? "M" + d.cell.join("L") + "Z" : null;
                 }
             })
-            .style("fill-opacity", 1);
+            .style("fill-opacity", 1);*/
 
-        /*var ports = topLayer.append('g')
+        var ports = topLayer.append('g')
             .attr("id", "locations")
             .selectAll("circle")
             .data(locations)
@@ -178,16 +215,17 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
             .attr("class", "port")
             .attr("transform", function(d) {
                 return "translate(" + d.x + "," + d.y + ")";
-            });*/
-
+            });
 
         var time_change = true;
 
-        var rate = 10;
+
+
+        var rate = 20;
         var chron = chroniton()
                 .width(width-60).height(50)
                 .tapAxis(function(axis) {
-                    axis.ticks(48);
+                    axis.ticks(12);
                     axis.orient("bottom");
                     axis.tickPadding(0);
                 })
@@ -203,9 +241,11 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
 
 
         var update = function() {
+            time_change = true;
 
+            date = new Date();
             if(time_change) {
-                interpolateHeightsForTime(chron.getValue().getTime());
+                interpolateHeightsForTime(chron.getValue().getTime()/*date.getTime()*/);
                 time_change = false;
 
                 ports = d3.selectAll(".port")
@@ -213,11 +253,24 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                     .attr("r", function(d) {
 
                         if(d.height) {
-                            return tideScale(d.height)*4;
+                            if(d.high_flag)
+                                return tideScale(d.height)*40;
+                            else
+                                return tideScale(d.height)*30;
                         }
                         return 1;
 
+                    })
+                    .style('fill',
+                           'none'
+                    )
+                    .style('stroke',
+                           function(d) {
+                            if(d.high_flag) return 'black';
+                            return 'grey';
+
                     });
+
 
                 d3.selectAll(".point-cell")
                     .data(locations)
@@ -229,10 +282,13 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                            function(d) {
                             return colorScale(d.height);
                     });
+
+
             }
         };
 
-        d3.timer(update, 5000);
+
+        d3.timer(update, 200);
 
 
         d3.select("#slider")

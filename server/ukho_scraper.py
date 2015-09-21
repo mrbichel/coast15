@@ -31,7 +31,6 @@ tide_logs = db.tide_logs
 BASE_URL = "http://www.ukho.gov.uk/EasyTide/EasyTide/"
 
 def get_port(port_id, predict_days=7):
-
     port = {}
     port['port_id'] = port_id
     port["missing_data"] = False

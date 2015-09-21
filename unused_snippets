@@ -40,3 +40,100 @@
 
         if(noBefore) console.log("noBefore");
         if(noBefore) console.log("noAfter");
+
+
+
+
+
+## get high and low around time for all coast15 locations
+# Get Locations selected for coast15
+@app.route("/cloc_data")
+def coast_location_data():
+
+    locations = get_coast15_locations()
+
+    ret = []
+    for location in locations:
+        logs = []
+        for log in location['logs']:
+            logs.append([
+                mktime(log['timestamp'].timetuple()),
+                log['height'],
+                log['type']
+                ])
+
+        logs.sort()
+
+        ret.append( [str(location['_id']), logs] )
+
+    return Response(
+        json_util.dumps({'logs' : ret}),
+        mimetype='application/json'
+    )
+
+    #ids = []
+    #for l in locs:
+    #    ids.append(ObjectId(l['_id']))
+
+    #tl = tide_logs.find({
+   #        "location": {"$in": ids},
+   #        "timestamp": {
+   #            "$gte": fromDate,
+   #            "$lt": toDate
+   #        },
+   #        })
+
+    #retAll = {}
+    #for l in locs:
+    #    ret = {}
+#
+    #    tl = tide_logs.find({
+    #        "location": ObjectId(l['_id']),
+    #        "timestamp": {
+    #            "$gte": fromDate,
+    #            "$lt": toDate
+    #        },
+    #        })
+#
+    #    for t in tl:
+    #        ret[mktime(t['timestamp'].timetuple())] = [t['height'], t['type']]
+#
+    #       retAll[str(l['_id'])] = ret
+
+
+
+
+    #f = Rbf(gX, gY, gZ, function='linear')
+    #grid = f(gX, gY)
+    #plt.subplot(414)
+    #plt.imshow(grid.T, origin='lower', cmap=cm.ocean)
+
+    #vals = ~np.isnan(gZ)
+    from sklearn import gaussian_process
+    #gp = gaussian_process.GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1., nugget=0.01)
+    #gp.fit(np.column_stack([gX[vals], gY[vals]]), gZ[vals])
+    #   vals = ~np.isnan(gZ)
+
+    #   gp = gaussian_process.GaussianProcess(regr='linear',corr='linear',theta0=np.min(Z),thetaL=min(Z),thetaU=max(Z),nugget=0.05)
+    #   gp.fit(np.column_stack( [  gX[vals], gY[vals]  ] ), gZ[vals])
+    #   rr_cc_as_cols = np.column_stack([gY.flatten(), gX.flatten()])
+    #   grid = gp.predict(rr_cc_as_cols).reshape(
+    #       ( len(gX[vals]) , len(gY[vals])))
+    #
+    #   plt.subplot(414)
+    #   plt.imshow(grid.T, origin='lower',extent=(lngMin,lngMax,latMin,latMax), cmap=cm.ocean)
+
+    #from mpl_toolkits.mplot3d import axes3d
+
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+    #ax.scatter(X, Y, Z)
+
+    #fig = plt.figure()
+    #ax = fig.add_subplot(111, projection='3d')
+    #ax.plot_wireframe(gX, gY, gZ, rstride=10, cstride=10)
+
+
+    #Creating the interpolation function and populating the output matrix value
+
+

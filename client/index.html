@@ -157,7 +157,7 @@ d3.json("data/uk.json", function(error, uk) {
 
     var data; // a global
 
-    d3.json("http://127.0.0.1:5000/loc", function(error, json) {
+    d3.json("http://127.0.0.1:5000/cloc", function(error, json) {
       if (error) return console.warn(error);
 
       locations = json.locations;

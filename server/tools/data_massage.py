@@ -156,7 +156,7 @@ def replace_country_names():
         ["^Korea .* Coast"                  , "Korea"],
         ["^Fiji Islands"                      , "Fiji"],
         ["^Japan .* Coast"                   , "Japan"],
-        ["^Japan Nansei Shoto", "Japan"],
+        ["^Japan Nansei Shoto",     "Japan"],
         ["^Thailand .* Coast"   , "Thailand"],
         ["^Canada, .*", "Canada"],
         ["^Sakhalin .* Coast", "Sakhalin"],
@@ -180,7 +180,6 @@ def fix_lat_lng_format():
         print loc['latlng']
 
 
-
 def status_report():
     print "locations status"
 
@@ -194,11 +193,35 @@ def status_report():
         locations.find({'geocode_flag': 'partial_match'}).count())
 
 
+
+def link_headlands_to_data_points():
+    with open("../../client/data/headlands.json") as f:
+        for line in f:
+            print line,
+        print json.loads(f.read())
+
+#
+# load cvs
+# for loc in locations
+# compare name
+# if name matches - or partial regex match
+# and latlng is withing a short distance
+# add field to db collection for headlands
+# add objectid entry in db with reference to the sensor location
+
+
+#def link_ports_to_data_points():
+
+#locations.createIndex( {"latlng": "2dsphere" } )
+
 if __name__ == "__main__":
 
     #fix_lat_lng_format()
 
     status_report()
+
+    link_headlands_to_data_points()
+
     #replace_country_names()
     #print locations.distinct("country")
 
@@ -206,14 +229,16 @@ if __name__ == "__main__":
     #status_report()
     #geocode("Banate", "Philippines")
     #find_dupe_key("name")
-    #find_dupe_key("port_id")
-    populate_location_data()
+    #for loc in find_dupe_key("latlng"):
+    #    print "{} - {} - {}".format(loc["latlng"], loc["country"], loc["name"])
 
-    #find_dupe_key("latlng")
+    #populate_location_data()
 
-    locs = locations.find({u'latlng': None})
-    for loc in locs:
-        print "{}".format(loc["country"])
+
+    #locs = locations.find({u'latlng': None})
+    #for loc in locs:
+    #    print "{}".format(loc["country"])
+
 
 
 

@@ -93,7 +93,8 @@ svg {
   transform:translate(0px, -5px);
 }
 .tick text {
-    display: none;
+    //display: none;
+    fill: white;
 }
 .slider .handle {
   fill: #fff;
@@ -115,5 +116,6 @@ svg {
 }
 .label {
   font:bold 12px sans-serif;
-  display: none;
+  //display: none;
+  fill: white;
 }

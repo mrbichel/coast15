@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#  2015 giulio <giulioungaretti@me.com> jhoan <public@jhoan.cc>
+#  2015 giulio <giulioungaretti@me.com> johan <public@jhoan.cc>
 """
 scrape le data
 """
@@ -23,20 +23,12 @@ db = client.uk_tide
 locations = db.locations
 tide_logs = db.tide_logs
 
-#locations.createIndex( {"latlng": "2dsphere" } )
-
-# add argument for days range - get some forward some back in time
-
-# todo: append date to url avoid problems with caching and make sure we are getting data for the correct date
-# also validate the date from the soup
-
 def get_data_for_date(date=None):
 
     if date is None:
         date = datetime.today()
 
     # append date to url  YYYYMMDD -20150516
-    # todo loop through dates in future and past
     base_url = "http://www.tidetimes.org.uk"
     req  = requests.get(base_url + "/all", verify=False)
 
@@ -97,50 +89,9 @@ def get_data_for_date(date=None):
                     print(label + " at " + logDate.strftime("%Y%m%d - %H:%M") + " water was at " + height + "m")
 
 
-for day in range(-5,5):
-    get_data_for_date(datetime.today() + timedelta(days=day))
-
-
-#### example table result
-# Hi/Lo
-# Time
-# Height
-# Low Tide
-# 04:45
-# (0.60m)
-# High Tide
-# 11:07
-# (4.50m)
-# Low Tide
-# 17:01
-# (0.90m)
-# High Tide
-# 23:27
-# (4.50m)
-###
-
-
-# mongo database
-# model: location
-#    - lat
-#    - lng
-#    - name
-#    - lastupdated
-#    - onetomany tideentry
-
-# model: tideentry
-#     - timestamp
-#     - type [HIGH, LOW, MEASURE]
-#     - water level in meters
-
-# get tide locations
-
-# update tidetimes for day
-
-# run a cron job to update the tide times for each lcoation every day
-
-# Function getEntriesForDay
-
-# location.getWaterLevelForTime
+if __name__ == "__main__":
+    # fetch 5 days ahead and 5 days back in time
+    for day in range(-5,5):
+        get_data_for_date(datetime.today() + timedelta(days=day))
 
 
