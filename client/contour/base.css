@@ -2,16 +2,11 @@ body {
   margin: 0;
   padding:0;
   font-family: Helvetica, Arial, sans-serif;
-  font-size: 2px;
-  background: prussianblue;
-  color: grey;
+  font-size: 15px;
+  background: #eee;
   scroll: no;
   overflow: hidden;
-
-  //background-image: url(../img/grainmirror.jpg);
-  //background-size: 100% 100%;
-  background-repeat: true true;
-
+  //background-image: url(../img/IMG_5601.jpg);
 }
 
 p {
@@ -22,13 +17,8 @@ p {
 svg {
 }
 
-svg#bg {
-
-
-
+#bg {
 }
-
-
 
 .point-cell {
   //fill: none;

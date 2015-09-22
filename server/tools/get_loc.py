@@ -9,9 +9,9 @@ import requests
 import json
 import sys
 
-file_path = sys.argv[1]
-if file_path == "":
-    print("type filename with cityies")
+file_path = "../../coast_shared_data/headlands_lands_end_to_london_clockwise.csv"#sys.argv[1]
+#if file_path == "(../../coast_shared_data/headlands_lands_end_to_london_clockwise.csv":
+#    print("type filename with cityies")
 
 df = pd.DataFrame.from_csv(file_path)
 # "./data/headlands_lands_end_to_london_clockwise.csv")
@@ -23,7 +23,7 @@ all = []
 for i in df.index:
     try:
         url = "https://maps.googleapis.com/maps/api/geocode/json"
-        payload = {"address": i, "components": "country:Uk",
+        payload = {"address": i,
                    "key": "AIzaSyAEO74970tLPQqr3K9z_tDj2W1r1mC49NE"}
         r = requests.get(url, payload)
         v = r.json()

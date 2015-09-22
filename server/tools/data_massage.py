@@ -214,13 +214,87 @@ def link_headlands_to_data_points():
 
 #locations.createIndex( {"latlng": "2dsphere" } )
 
+
+def get_coast15_match(fromDate, toDate, bounds=[[48, -26], [64, 10]]): # add bounds here
+    coast15_match = {
+          "latlng": {
+                  #"$exists": True,
+                  "$within": { "$box":  bounds } # world: [[0,0],[190,190]]
+              },
+          "logs": {
+              "$elemMatch": { "timestamp": { "$gte": fromDate, "$lt": toDate } }
+              },
+          "source": {"$ne": 'tidetimes'},
+          "missing_data":  {"$ne": True},
+          "country": {"$in": ["England", "Scotland", "Ireland","Wales"]}
+      }
+
+    return coast15_match
+
+def get_coast15_locations(fromDate, toDate):
+
+    # todo match log count greater than ?
+
+    locs = locations.aggregate([
+            {"$match"  : get_coast15_match(fromDate, toDate) },
+            {"$unwind" : "$logs"},
+            {"$match"  : { "logs.timestamp": { "$gte": fromDate, "$lt": toDate }}},
+            #{"$project": {"logs.timestamp":1}}
+            { "$group": {
+                "_id": "$_id",
+                "latlng" : { "$first": '$latlng' },
+                "name" : { "$first": '$name' },
+                "logs": { "$addToSet": "$logs" }
+            }},
+        ]
+    )
+
+    return locs
+
+
+def flag_coast15_selections():
+
+    fromDate = datetime.utcnow() - timedelta(days=1)
+    toDate = datetime.utcnow() + timedelta(days=1)
+
+
+    exclude_names = ["Appledore",
+    "Yelland Marsh",
+    "Fremington",
+    "Martin's Haven",
+    "Port Cardigan",
+    "Coquet Island",
+    "Goole",
+    "Keadby",
+    "Burton Stather",
+    "Hull (King George Dock)",
+    "Boston, England",
+    "Woodbridge Haven",
+    "Redbridge",
+    "White House",
+    "Freshwater Bay",
+    "Whitaker Beacon"]
+
+
+    for location in list(get_coast15_locations(fromDate, toDate)):
+        if location["name"] not in exclude_names:
+            locations.update_one({'_id': location['_id']},
+                 {"$set": { "coast_select": True}})
+        else:
+            locations.update_one({'_id': location['_id']},
+                 {"$set": { "coast_select": False}})
+
+
+
+
 if __name__ == "__main__":
 
     #fix_lat_lng_format()
+    flag_coast15_selections();
 
     status_report()
 
-    link_headlands_to_data_points()
+    #link_headlands_to_data_points()
 
     #replace_country_names()
     #print locations.distinct("country")

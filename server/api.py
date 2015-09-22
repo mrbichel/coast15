@@ -51,6 +51,8 @@ def get_coast15_match(fromDate, toDate, bounds=[[48, -26], [64, 10]]): # add bou
               },
           "source": {"$ne": 'tidetimes'},
           "missing_data":  {"$ne": True},
+          "coast_select": True,
+          "country": {"$in": ["England", "Scotland", "Ireland","Wales"]}
       }
 
     return coast15_match
@@ -199,7 +201,7 @@ def get_grid_frames(fromDate, toDate, resolution=60*15, method='linear'):
         valMin = np.min(frame['values'])
         valMax = np.max(frame['values'])
 
-        cellsize = 0.25 # 0.2 about 5850 values -# this should be a parameter
+        cellsize = 0.99 # 0.2 about 5850 values -# this should be a parameter
 
         ncol = int(math.ceil(latMax-latMin)) / cellsize
         nrow = int(math.ceil(lngMax-lngMin)) / cellsize
@@ -214,7 +216,7 @@ def get_grid_frames(fromDate, toDate, resolution=60*15, method='linear'):
         #frame['gridz'] = griddata(frame['points'], frame['values'], (frame['gridx'], frame['gridy']), method=method) #,fill_value=1)
         #Creating the interpolation function and populating the output matrix value
 
-        rbf = Rbf(frame['lng'], frame['lat'], frame['values'], function=method, smooth=2)
+        rbf = Rbf(frame['lng'], frame['lat'], frame['values'], function=method, smooth=1)
         frame['gridz'] = rbf(frame['gridx'], frame['gridy'])
 
         frame['ncol'] = ncol
@@ -224,33 +226,27 @@ def get_grid_frames(fromDate, toDate, resolution=60*15, method='linear'):
 
 
 @app.route("/grid") #fromDate, toDate, resolution, linear / nearest
-def coast_grid(resolution=60*15): # resolution in seconds
+def coast_grid(resolution=60*40): # resolution in seconds
 
     # todo: snap from time to even multiple of resolution so we can use cached frames
-    fromDate = datetime.utcnow() - timedelta(days=0.2)
-    toDate = datetime.utcnow() + timedelta(days=0.2)
+    fromDate = datetime.utcnow() - timedelta(days=0.1)
+    toDate = datetime.utcnow() + timedelta(days=0.1)
 
     frames = get_grid_frames(fromDate, toDate, resolution)
 
     o = []
     for frame in frames:
-
-        f_ret = []
-        vals = frame['gridz'].ravel()
-        x = frame['gridx'].ravel()
-        y = frame['gridy'].ravel()
-
-        for idx in range(0,len(vals)):
-            if not math.isnan(vals[idx]):
-                f_ret.append([
-                        x[idx],
-                        y[idx],
-                        vals[idx]
-                    ])
-
         # todo: cache individual grids by timestamp key
         # expire on frame['t'] - half duration of frontend viz
-        o.append([ frame['t'], frame['gridz'] ])
+
+        latMax = np.max(frame['lat']) +1
+        latMin = np.min(frame['lat']) -1
+        lngMax = np.max(frame['lng']) +1
+        lngMin = np.min(frame['lng']) -1
+
+        bounds = [lngMin,lngMax,latMin,latMax]
+
+        o.append([ frame['t'], frame['gridz'], bounds, frame['ncol'], frame['nrow']])
 
     # todo: cache the complete response for resolution
     return Response(
