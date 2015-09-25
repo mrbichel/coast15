@@ -10,8 +10,8 @@ import json
 import time
 # import sys
 
-file_path = "./allhead.csv"
-# file_path = "./all.csv"
+# file_path = "./allhead.csv"
+file_path = "./all.csv"
 # wtf
 # sys.argv[1]
 # if file_path == "(../../coast_shared_data/headlands_lands_end_to_london_clockwise.csv":
@@ -34,8 +34,21 @@ for i in df.index:
         v = r.json()
         status = v['status'] 
         if status == "ZERO_RESULTS":
-            print(i)
-            continue
+            if "Point" in i:
+                i.replace("Point", "")
+                payload = {"address": i,
+                           "key": "AIzaSyApa4ZMw-LY5s6i11DxBcivlJB1jzxVKJk"}
+                time.sleep(0.1)
+                r = requests.get(url, payload)
+                v = r.json()
+                status = v['status'] 
+                if status == "ZERO_RESULTS":
+                    print("bummer")
+                    print(i)
+                    continue
+            else:
+                    print(i)
+                    continue
         res = v['results'][0]
         latlong = res['geometry']['location']
         name = res['address_components'][0]['long_name']

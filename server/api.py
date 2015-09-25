@@ -18,8 +18,8 @@ from time import mktime
 from scipy.interpolate import interp1d
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import colors, ticker, cm
+# import matplotlib.pyplot as plt
+# from matplotlib import colors, ticker, cm
 from scipy.interpolate import Rbf
 from scipy.interpolate import griddata
 
@@ -258,44 +258,44 @@ def coast_grid(resolution=60*40): # resolution in seconds
 
 
 
-def plot_grid():
+# def plot_grid():
 
-    fromDate = datetime.utcnow() - timedelta(days=0.2)
-    toDate = datetime.utcnow() + timedelta(days=0.2)
+    # fromDate = datetime.utcnow() - timedelta(days=0.2)
+    # toDate = datetime.utcnow() + timedelta(days=0.2)
 
-    frames = get_grid_frames(fromDate, toDate)
+    # frames = get_grid_frames(fromDate, toDate)
 
-    frame = frames[0]
+    # frame = frames[0]
 
-    latMax = np.max(frame['lat']) +2
-    latMin = np.min(frame['lat']) -2
-    lngMax = np.max(frame['lng']) +2
-    lngMin = np.min(frame['lng']) -2
+    # latMax = np.max(frame['lat']) +2
+    # latMin = np.min(frame['lat']) -2
+    # lngMax = np.max(frame['lng']) +2
+    # lngMin = np.min(frame['lng']) -2
 
-    gX, gY, gZ = frame['gridx'].T, frame['gridy'].T, frame['gridz'].T
+    # gX, gY, gZ = frame['gridx'].T, frame['gridy'].T, frame['gridz'].T
 
-    X, Y, Z = frame['lng'], frame['lat'], frame['values']
+    # X, Y, Z = frame['lng'], frame['lat'], frame['values']
 
-    plt.subplot(411)
-    plt.scatter(frame['lng'],frame['lat'], c=frame['values'])  ##ocean
-    plt.colorbar()
+    # plt.subplot(411)
+    # plt.scatter(frame['lng'],frame['lat'], c=frame['values'])  ##ocean
+    # plt.colorbar()
 
-    plt.subplot(412)
-    plt.imshow(frame['gridz'].T, extent=(lngMin,lngMax,latMin,latMax), origin='lower', cmap=cm.ocean)
-    plt.colorbar()
+    # plt.subplot(412)
+    # plt.imshow(frame['gridz'].T, extent=(lngMin,lngMax,latMin,latMax), origin='lower', cmap=cm.ocean)
+    # plt.colorbar()
 
-    plt.subplot(413)
-    plt.pcolor(gX, gY, gZ, cmap=cm.GnBu)
-    plt.title('RBF interpolation')
-    plt.colorbar()
+    # plt.subplot(413)
+    # plt.pcolor(gX, gY, gZ, cmap=cm.GnBu)
+    # plt.title('RBF interpolation')
+    # plt.colorbar()
 
-    plt.subplot(414)
-    plt.contourf(frame['gridx'].T, frame['gridy'].T, gZ, cmap=cm.GnBu)
-    plt.colorbar()
-    plt.title('Grid')
+    # plt.subplot(414)
+    # plt.contourf(frame['gridx'].T, frame['gridy'].T, gZ, cmap=cm.GnBu)
+    # plt.colorbar()
+    # plt.title('Grid')
 
-    plt.gcf().set_size_inches(6, 6)
-    plt.show()
+    # plt.gcf().set_size_inches(6, 6)
+    # plt.show()
 
 
 
