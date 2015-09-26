@@ -296,29 +296,9 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                 return "translate(" + d.x + "," + d.y + ")";
             });*/
 
-
-        /*var texts = topLayer.selectAll("text")
-                .data(locations)
-                .enter();
-
-        texts.append("text")
-            .text(function(d){
-                    return d.name;
-                })
-            .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")"
-            }).attr("fill", "red");*/
-     // set position etc.
-
-
-
-        /* Create the text for each block */
-       /* sensorPoints.append("text")
-            .attr("dx", function(d){return -20})
-            .text(function(d){return d.name})
-*/
         var time_change = true;
         var rate = 20;
+
         var chron = chroniton()
                 .width(width-60).height(50)
                 .tapAxis(function(axis) {
@@ -337,25 +317,14 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
 
         svg.on('mousemove', function () {
             var coordinates = [0, 0];
-            coordinates = d3.mouse(this);
-            var x = coordinates[0]; //+ zoom.translate()[0]/zoom.scale();
-            var y = coordinates[1]; //+ zoom.translate()[1]/zoom.scale();
-
+            mouseCoords = d3.mouse(this);
 
             topLayer.selectAll("text")
             .data(harbors).transition()
             .attr("fill-opacity", function(d) {
 
                     coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
-
-                    xd = x-coords.x;
-                    yd = y-coords.y;
-
-                    //cx = +circle.getAttribute('cx');
-                    //cy = +circle.getAttribute('cy');
-
-                    distance = Math.sqrt(xd*xd + yd*yd);
-
+                    var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
                     //if(d.name == "")
                     if(distance < 10*zoom.scale()) {
                         return 1;
