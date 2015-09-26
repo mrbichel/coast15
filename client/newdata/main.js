@@ -12,18 +12,14 @@ function distanceApprox(p1,p2){
     return 1.426776695*Math.min(0.7071067812*(Math.abs(x)+Math.abs(y)), Math.max (Math.abs(x), Math.abs(y)));
 }
 
-
-// The magic function - converts node positions into positions on screen.
 function getScreenCoords(x, y, translate, scale) {
     var xn = translate[0] + x*scale;
     var yn = translate[1] + y*scale;
     return { x: xn, y: yn };
 }
 
-
 var width = window.innerWidth,
     height = window.innerHeight;
-
 
 var scale,
     translate,
@@ -59,8 +55,6 @@ var zoom = d3.behavior.zoom()
     .on("zoom", zoomed);
 
 
-
-
 svg.append("rect")
     .attr("class", "overlay")
     .attr("width", width)
@@ -71,29 +65,18 @@ svg
     .call(zoom.event);
 
 
-
-
-
-
 var voronoi = d3.geom.voronoi()
     .x(function(d) { return d.x; })
     .y(function(d) { return d.y; })
     .clipExtent([[-200, -200], [width + 400, height + 400]]);
 
-var filter = svg.append("defs")
-  .append("filter")
-    .attr("id", "blur")
-  .append("feGaussianBlur")
-    .attr("stdDeviation", 0);
-
-function blur() {
-  filter.attr("stdDeviation", 1);
-}
-
 var localColorScale  = d3.scale.linear();
-localColorScale.domain([0, 0.9,  1])
-    .range([d3.rgb(0, 0, 0), d3.rgb(60, 60, 60), d3.rgb(230, 230, 240)]);
+localColorScale.domain([0, 0.1, 0.9,  1])
+    .range([d3.rgb(0, 0, 0), d3.rgb(0, 0, 0), d3.rgb(60, 60, 60), d3.rgb(230, 230, 240)]);
 //    .range([d3.rgb(15, 77, 41), d3.rgb(15, 77, 141), d3.rgb(131, 203, 197), d3.rgb(239, 248, 232)]);
+
+//localColorScale.domain([0, 0.4, 0.8, 0.9,  1])
+//    .range([d3.rgb(255, 255, 255), d3.rgb(250, 250, 255), d3.rgb(230, 230, 250), d3.rgb(100, 100, 220), d3.rgb(80, 80, 160)]);
 
 
 var localScale  = d3.scale.linear();
@@ -149,25 +132,6 @@ var interpolateHeightsForTime = function(t) {
                 d.localHeightNormalized = weight;
             } else {
                 d.localHeightNormalized = 1-weight;
-            }
-
-            d.high_flag = false;
-            d.low_flag = false;
-
-            if(weight>0.99) {
-                if (d.next.type == "high") {
-                    d.high_flag = true;
-                } else {
-                    d.low_flag = true;
-                }
-            }
-
-            if(weight<0.01) {
-                if (d.prev.type == "high") {
-                    d.high_flag = true;
-                } else {
-                    d.low_flag = true;
-                }
             }
 
         } else {
@@ -467,8 +431,6 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                             return "hard-light";
                     });*/
 
-
-
             }
         };
 
@@ -511,6 +473,8 @@ function zoomed() {
    topLayer.selectAll(".harbor")
             .data(harbors)
             .attr('r', r );
+
+
 }
 
 
