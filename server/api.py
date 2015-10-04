@@ -4,7 +4,8 @@
 """
 main api to query mongodb
 """
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, request
+
 from datetime import datetime, timedelta
 from urlparse import urlparse, parse_qs
 from decimal import *
@@ -22,6 +23,8 @@ import numpy as np
 # from matplotlib import colors, ticker, cm
 from scipy.interpolate import Rbf
 from scipy.interpolate import griddata
+import dateutil.parser
+
 
 app = Flask(__name__)
 #app = create_app(config="config.yaml")
@@ -38,7 +41,6 @@ locations = db.locations
 @app.route("/")
 def hello():
     return "Coast API"
-
 
 def get_coast15_match(fromDate, toDate, bounds=[[48, -26], [64, 10]]): # add bounds here
     coast15_match = {
@@ -77,13 +79,16 @@ def get_coast15_locations(fromDate, toDate):
 
     return locs
 
-
-# Get Locations selected for coast15 # from date to date - optional get arguments all
 @app.route("/cloc")
 def coast_location():
 
-    fromDate = datetime.utcnow() - timedelta(days=1)
-    toDate = datetime.utcnow() + timedelta(days=1)
+    fromDateArg = dateutil.parser.parse(request.args.get('from')) # or datetime.utcnow() - timedelta(days=1)
+    toDateArg = dateutil.parser.parse(request.args.get('to')) #or datetime.utcnow() + timedelta(days=1)
+
+    # increase rane to make sure front end has data for entire period, we could fix this in the db query return instead including logs one step before and after the dates
+    fromDate = fromDateArg - timedelta(days=1)
+    toDate = toDateArg + timedelta(days=1)
+
     locs = get_coast15_locations(fromDate, toDate)
 
     o = []
@@ -95,7 +100,6 @@ def coast_location():
                 log['height'],
                 log['type']
                 ])
-
         logs.sort()
 
         o.append([
@@ -112,8 +116,6 @@ def coast_location():
         json_util.dumps({'locations' : o}),
         mimetype='application/json'
     )
-
-
 
 # linear or nearest
 def get_grid_frames(fromDate, toDate, resolution=60*15, method='linear'):

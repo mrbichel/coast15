@@ -32,7 +32,7 @@ var projection = d3.geo.albers()
     .center([0, 55.4])
     .rotate([4.4, 0])
     .parallels([50, 60])
-    .scale(2800)
+    .scale(4600)
     .translate([width / 2, height / 2]);
 
 var center = projection([0, 55.4]);
@@ -41,17 +41,53 @@ var path = d3.geo.path().projection(projection);
 
 var svg = d3.select("body").append("svg")
     .attr("width", width)
-    .attr("height", height)
-  .append("g");
+    .attr("height", height);
+
+var defs = svg.append('defs');
+
+var blurAmount = 10;
+
+//Blur filter
+var filterBlur = defs.append('svg:filter')
+    .attr({ id: 'blur' });
+filterBlur.append('feGaussianBlur')
+        .attr({
+            'in': "SourceGraphic",
+            'stdDeviation': blurAmount
+        });
+
+var pattern = defs.append("pattern")
+    .attr('id', 'pattern')
+    .attr('patternUnits', 'userSpaceOnUse')
+    .attr('width', 120)
+    .attr('height', 120)
+    .attr("x", 0).attr("y", 0);
+
+pattern.append("svg:image")
+                .attr("xlink:href", "/img/bluetile.jpg")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", 120)
+                .attr("height", 120);
 
 var g = svg.append("g");
 
-var bgLayer = g.append('g').attr("id", "bg");
+
+var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
+.attr("width", width+300)
+.attr("height", height+300)
+.attr("x", -100)
+.attr("y", -100)
+.style("fill","url(#pattern)");
+
+
+var bgLayer = g.append('g').attr("id", "bg")
+.attr("filter", "url(#blur)");
 var midLayer = g.append('g').attr("id", "mid");
 var topLayer = g.append('g').attr("id", "top");
 
 var zoom = d3.behavior.zoom()
-    .scaleExtent([1, 8])
+    .scaleExtent([1, 6])
     .on("zoom", zoomed);
 
 
@@ -64,19 +100,21 @@ svg
     .call(zoom)
     .call(zoom.event);
 
-
 var voronoi = d3.geom.voronoi()
     .x(function(d) { return d.x; })
     .y(function(d) { return d.y; })
-    .clipExtent([[-200, -200], [width + 400, height + 400]]);
+    .clipExtent([[-100, -100], [width + 200, height + 200]]);
 
 var localColorScale  = d3.scale.linear();
-localColorScale.domain([0, 0.1, 0.9,  1])
-    .range([d3.rgb(0, 0, 0), d3.rgb(0, 0, 0), d3.rgb(60, 60, 60), d3.rgb(230, 230, 240)]);
+//localColorScale.domain([0, 0.1, 0.9,  1])
+//    .range([d3.rgb(0, 0, 0), d3.rgb(0, 0, 0), d3.rgb(60, 60, 60), d3.rgb(230, 230, 240)]);
 //    .range([d3.rgb(15, 77, 41), d3.rgb(15, 77, 141), d3.rgb(131, 203, 197), d3.rgb(239, 248, 232)]);
 
-//localColorScale.domain([0, 0.4, 0.8, 0.9,  1])
-//    .range([d3.rgb(255, 255, 255), d3.rgb(250, 250, 255), d3.rgb(230, 230, 250), d3.rgb(100, 100, 220), d3.rgb(80, 80, 160)]);
+
+// Atlas blues
+localColorScale.domain([0, 0.4, 0.8, 0.9,  1])
+//localColorScale.domain([1, 0.9, 0.8, 0.4,  0])
+    .range([d3.rgb(170, 200, 228), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
 
 
 var localScale  = d3.scale.linear();
@@ -113,10 +151,9 @@ var interpolateHeightsForTime = function(t) {
 
         //id = d3.bisect(d.logs, timestamp);
         if(d.next && d.prev) {
-             //d.low = d3.min([d.prev.height, d.next.height]);
+            // d.low = d3.min([d.prev.height, d.next.height]);
             //    d.high = d3.max([d.prev.height, d.next.height]);
-
-            //d.heightScale.domain([d.low, d.low*1.01, d.high*0.99, d.high])
+            // d.heightScale.domain([d.low, d.low*1.01, d.high*0.99, d.high])
             //    .range(0,0.4,0.6,1);
 
             interpolate = d3.interpolateNumber(d.prev.height, d.next.height);
@@ -225,7 +262,14 @@ d3.json("../data/harbors.json", function(_harbors) {
 );
 
 
-d3.json("http://127.0.0.1:5000/cloc", function(json) {
+var now = Date.now(); // unix time stamp
+var delta = 60*60*12*1000; // 12 hours in milisseconds
+
+var fromTime = new Date(now-delta);
+var toTime = new Date(now+delta);
+
+
+d3.json("http://127.0.0.1:5000/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
 
         json.locations.forEach(function(d) {
                 l = [];
@@ -258,10 +302,11 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                 locations.push(l);
         });
 
-        var start_time = new Date(d3.max(locations, function(d) {
-                    return d.start_time; }));
-        var end_time = new Date(d3.min(locations, function(d) {
-                    return d.end_time; }));
+
+        var start_time = fromTime; //new Date(d3.max(locations, function(d) {   return d.start_time; }));
+        var end_time = toTime; //new Date(d3.min(locations, function(d) { return d.end_time; }));
+
+        console.log(start_time, end_time);
 
         voronoi(locations).forEach(function(d) {
                         d.point.cell = d;
@@ -280,8 +325,7 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                     return d.cell.length ? "M" + d.cell.join("L") + "Z" : null;
                 }
             })
-            .style("fill-opacity", 1);
-
+            ;
         /*var sensorPoints = topLayer.append('g')
             .attr("id", "locations")
             .selectAll("circle")
@@ -297,23 +341,24 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
             });*/
 
         var time_change = true;
-        var rate = 20;
 
         var chron = chroniton()
                 .width(width-60).height(50)
                 .tapAxis(function(axis) {
-                    axis.ticks(12);
+                    axis.ticks(24);
                     axis.orient("bottom");
                     axis.tickPadding(0);
+                    axis.tickFormat(d3.time.format('%H'));
                 })
+                .labelFormat(d3.time.format('%A %X'))
                 .domain([start_time, end_time])
                 .on('change', function(d) {
                     time_change = true;
                 })
                 .playButton(false)
-                .playbackRate(1/rate)
-                .play()
-                .loop(true);
+                .loop(false);
+
+
 
         svg.on('mousemove', function () {
             var coordinates = [0, 0];
@@ -336,11 +381,13 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
 
         });
 
+        var updateRate = 200;
 
 
         var update = function() {
 
 
+            chron.setValue( new Date(chron.getValue().getTime() + updateRate/10) );
 
 
             time_change = true;
@@ -382,11 +429,6 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                         //return 1-localScale(d.localHeightNormalized);
                         return 1;
                     })
-                    .style("stroke-width", 0)
-                    .style('stroke-opacity', function(d) {
-                        return 1;
-                        //return 1-localScale(d.localHeightNormalized);
-                    })
                     .style('fill',
                            function(d) {
                             return localColorScale(d.localHeightNormalized);
@@ -397,14 +439,14 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
                     });
                     /*.style('mix-blend-mode',
                            function(d) {
-                            return "hard-light";
+                            return "color-burn";
                     });*/
 
             }
         };
 
 
-        d3.timer(update, 200);
+        d3.timer(update, updateRate);
 
 
         d3.select("#slider")
@@ -416,13 +458,11 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
             .style({"left": "30px"});
 
         d3.select(".chroniton")
-            .attr("transform", "translate(0,-16)");
-            /*.on("click", function() {
-                console.log(chron)
-                if( chron.playing() ) {
-                    chron.pause();
-                }
-            });*/
+            //.attr("transform", "translate(0,-16)")
+            .on("click", function() {
+            });
+
+        chron.setValue(new Date());
 
 
     });
@@ -430,6 +470,7 @@ d3.json("http://127.0.0.1:5000/cloc", function(json) {
 
 
 function zoomed() {
+
 
    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 
