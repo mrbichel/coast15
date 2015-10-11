@@ -27,7 +27,7 @@ def deploy_server():
             run('git pull')
             # put all the server files
             #put('./server', env.directory)
-            run('pip install -r requirements.txt')
+            run('pip install -r server/requirements.txt')
             run('touch server/app.py') # this triggers a gracefull reload
 
 def deploy():
