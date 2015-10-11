@@ -25,7 +25,6 @@ from scipy.interpolate import Rbf
 from scipy.interpolate import griddata
 import dateutil.parser
 
-
 app = Flask(__name__)
 #app = create_app(config="config.yaml")
 
@@ -36,7 +35,6 @@ app.debug = True
 client = MongoClient('localhost', 27017)
 db = client.uk_tide
 locations = db.locations
-
 
 @app.route("/")
 def hello():

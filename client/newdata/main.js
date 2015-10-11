@@ -78,7 +78,7 @@ var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
 .attr("height", height+300)
 .attr("x", -100)
 .attr("y", -100)
-.style("fill","url(#pattern)");
+.style("fill",/*"url(#pattern)"*/ "black");
 
 
 var bgLayer = g.append('g').attr("id", "bg")
