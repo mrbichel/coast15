@@ -78,7 +78,7 @@ var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
 .attr("height", height+300)
 .attr("x", -100)
 .attr("y", -100)
-.style("fill",/*"url(#pattern)"*/ "black");
+.style("fill","url(#pattern)");
 
 
 var bgLayer = g.append('g').attr("id", "bg")
@@ -181,7 +181,7 @@ var interpolateHeightsForTime = function(t) {
 // todo load headlands
 // todo load harbors
 
-d3.json("../data/uk.json", function(error, uk) {
+d3.json("./data/uk.json", function(error, uk) {
 
     var subunits = topojson.feature(uk, uk.objects.subunits);
      midLayer.append('g').attr("id", "uk-map")
@@ -193,11 +193,18 @@ d3.json("../data/uk.json", function(error, uk) {
         .attr("fill", localColorScale(0));
 });
 
-/*headlands = [];
-d3.json("../data/headlands.json",
-        function(_headlands) {
-            headlands = _headlands;
-            topLayer.append('g')
+headlands = [];
+d3.json("./data/headlands.json", function(_headlands) {
+        _headlands.forEach(function(d) {
+                l = [];
+                l.name = d.name;
+                var position = projection([d.lng, d.lat]);
+                l.x = position[0];
+                l.y = position[1];
+                headlands.push(l);
+        });
+
+        topLayer.append('g')
                 .attr("id", "headlands")
                 .selectAll("circle")
                 .data(headlands)
@@ -206,18 +213,33 @@ d3.json("../data/headlands.json",
                 .attr("id", function(d) {
                     return d.name;
                 })
-                .attr("class", "port")
+                .attr("class", "headland")
                 .attr("transform", function(d) {
-                    var p = projection([d.lng, d.lat]);
-                    return "translate(" + p[0] + "," + p[1] + ")";
-                }).attr("fill", "white")
+                    return "translate(" + d.x + "," + d.y+ ")";
+                }).attr("fill", "black")
                 .attr('r', 0.3);
 
+
+        var texts = topLayer.append('g').attr("id", "headland_names")
+                .selectAll("text")
+                .data(headlands)
+                .enter();
+
+        texts.append("text")
+            .text(function(d){
+                    return d.name;
+                })
+
+            .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y+ ")";
+            }).attr("fill", "black");
+
+
         }
-);*/
+);
 
 
-d3.json("../data/harbors.json", function(_harbors) {
+d3.json("./data/harbors.json", function(_harbors) {
 
         _harbors.forEach(function(d) {
                 l = [];
@@ -229,7 +251,7 @@ d3.json("../data/harbors.json", function(_harbors) {
         });
 
         topLayer.append('g')
-                .attr("id", "harbor")
+                .attr("id", "harbors")
                 .selectAll("circle")
                 .data(harbors)
                 .enter()
@@ -240,11 +262,12 @@ d3.json("../data/harbors.json", function(_harbors) {
                 .attr("class", "harbor")
                 .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", "grey")
+                }).attr("fill", "black")
                 .attr('r', 0.3);
 
 
-        var texts = topLayer.selectAll("text")
+        var texts = topLayer.append('g').attr("id", "headland_names")
+                 .selectAll("text")
                 .data(harbors)
                 .enter();
 
@@ -255,7 +278,7 @@ d3.json("../data/harbors.json", function(_harbors) {
 
             .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", "grey");
+            }).attr("fill", "black");
 
 
         }
@@ -269,7 +292,7 @@ var fromTime = new Date(now-delta);
 var toTime = new Date(now+delta);
 
 
-d3.json("http://127.0.0.1:5000/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
+d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
 
         json.locations.forEach(function(d) {
                 l = [];

@@ -32,7 +32,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 app.debug = True
 
-client = MongoClient('localhost', 27017)
+client = MongoClient('localhost', 27017, connect=False)
 db = client.uk_tide
 locations = db.locations
 

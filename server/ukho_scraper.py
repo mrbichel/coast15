@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-scrape le data
-"""
 from bs4 import BeautifulSoup
 import requests
 import requests_cache
