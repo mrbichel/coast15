@@ -27,6 +27,7 @@ var scale,
 
 var locations = [];
 var harbors = [];
+var headlands = [];
 
 var projection = d3.geo.albers()
     .center([0, 55.4])
@@ -40,8 +41,10 @@ var center = projection([0, 55.4]);
 var path = d3.geo.path().projection(projection);
 
 var svg = d3.select("body").append("svg")
+    .attr("class", "loading")
     .attr("width", width)
     .attr("height", height);
+
 
 var defs = svg.append('defs');
 
@@ -50,7 +53,8 @@ var blurAmount = 10;
 //Blur filter
 var filterBlur = defs.append('svg:filter')
     .attr({ id: 'blur' });
-filterBlur.append('feGaussianBlur')
+
+var blur = filterBlur.append('feGaussianBlur')
         .attr({
             'in': "SourceGraphic",
             'stdDeviation': blurAmount
@@ -72,7 +76,8 @@ pattern.append("svg:image")
 
 var g = svg.append("g");
 
-
+var format = d3.time.format("%A %H:%M");
+var timelabel = d3.select("#timecontrol time");
 var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
 .attr("width", width+300)
 .attr("height", height+300)
@@ -80,15 +85,15 @@ var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
 .attr("y", -100)
 .style("fill","url(#pattern)");
 
-
-var bgLayer = g.append('g').attr("id", "bg")
-.attr("filter", "url(#blur)");
+var bgLayer = g.append('g').attr("id", "bg").attr("filter","url(#blur)");
 var midLayer = g.append('g').attr("id", "mid");
 var topLayer = g.append('g').attr("id", "top");
 
 var zoom = d3.behavior.zoom()
-    .scaleExtent([1, 6])
-    .on("zoom", zoomed);
+    .scaleExtent([1, 4])
+    .on("zoomstart", zoomstart)
+    .on("zoom", zoomed)
+    .on("zoomend", zoomend);
 
 
 svg.append("rect")
@@ -120,12 +125,6 @@ localColorScale.domain([0, 0.4, 0.8, 0.9,  1])
 var localScale  = d3.scale.linear();
 localScale.domain([0, 0.9, 1])
     .range([0, 0, 1]);
-
-var colorScale = d3.scale.linear();
-        // todo update with new data
-
-colorScale.domain([-0.2, 8, 14])
-    .range(["black", "black", "white"]);
 
 var tideScale = d3.scale.linear();
 tideScale.domain([-0.2, 14]);
@@ -178,9 +177,6 @@ var interpolateHeightsForTime = function(t) {
     });
 };
 
-// todo load headlands
-// todo load harbors
-
 d3.json("./data/uk.json", function(error, uk) {
 
     var subunits = topojson.feature(uk, uk.objects.subunits);
@@ -193,50 +189,7 @@ d3.json("./data/uk.json", function(error, uk) {
         .attr("fill", localColorScale(0));
 });
 
-headlands = [];
-d3.json("./data/headlands.json", function(_headlands) {
-        _headlands.forEach(function(d) {
-                l = [];
-                l.name = d.name;
-                var position = projection([d.lng, d.lat]);
-                l.x = position[0];
-                l.y = position[1];
-                headlands.push(l);
-        });
 
-        topLayer.append('g')
-                .attr("id", "headlands")
-                .selectAll("circle")
-                .data(headlands)
-                .enter()
-                .append("circle")
-                .attr("id", function(d) {
-                    return d.name;
-                })
-                .attr("class", "headland")
-                .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", "black")
-                .attr('r', 0.3);
-
-
-        var texts = topLayer.append('g').attr("id", "headland_names")
-                .selectAll("text")
-                .data(headlands)
-                .enter();
-
-        texts.append("text")
-            .text(function(d){
-                    return d.name;
-                })
-
-            .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", "black");
-
-
-        }
-);
 
 
 d3.json("./data/harbors.json", function(_harbors) {
@@ -259,14 +212,14 @@ d3.json("./data/harbors.json", function(_harbors) {
                 .attr("id", function(d) {
                     return d.name;
                 })
-                .attr("class", "harbor")
+                .attr("class", "harbor_point")
                 .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
                 }).attr("fill", "black")
                 .attr('r', 0.3);
 
 
-        var texts = topLayer.append('g').attr("id", "headland_names")
+        var texts = topLayer.append('g').attr("id", "harbor_names")
                  .selectAll("text")
                 .data(harbors)
                 .enter();
@@ -278,18 +231,106 @@ d3.json("./data/harbors.json", function(_harbors) {
 
             .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", "black");
+            }).attr("fill", "black")
+            .attr("class", "harbor_label");
+
+    d3.json("./data/headlands.json", function(_headlands) {
+        _headlands.forEach(function(d) {
+                l = [];
+                l.name = d.name;
+                var position = projection([d.lng, d.lat]);
+                l.x = position[0];
+                l.y = position[1];
+                headlands.push(l);
+        });
+
+        topLayer.append('g')
+                .attr("id", "headlands")
+                .selectAll("circle")
+                .data(headlands)
+                .enter()
+                .append("circle")
+                .attr("id", function(d) {
+                    return d.name;
+                })
+                .attr("class", "headland_point")
+                .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y+ ")";
+                }).attr("fill", "red")
+                .attr('r', 0.3);
 
 
-        }
-);
+        var texts = topLayer.append('g').attr("id", "headland_names")
+                .selectAll("text")
+                .data(headlands)
+                .attr("class", "headland_label")
+                .enter();
+
+        texts.append("text")
+            .text(function(d){
+                    return d.name;
+                })
+
+            .attr("transform", function(d) {
+                    return "translate(" + d.x + "," + d.y+ ")";
+            }).attr("fill", "red")
+            .attr("class", "headland_label");
+
+
+
+        svg.on('mousemove', function () {
+            var coordinates = [0, 0];
+            mouseCoords = d3.mouse(this);
+
+            topLayer.selectAll(".harbor_label")
+            .data(harbors).transition()
+            .attr("fill-opacity", function(d) {
+
+                    coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
+                    var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
+
+                    console.log(distance);
+
+                    if(distance < 10*zoom.scale()) {
+                        return (1/distance);
+                    } else {
+                        return 0;
+                    }
+            });
+
+            topLayer.selectAll(".headland_label")
+            .data(headlands).transition()
+            .attr("fill-opacity", function(d) {
+
+                    coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
+                    var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
+                    //if(d.name == "")
+                    if(distance < 10*zoom.scale()) {
+                        return (1/distance);
+                    } else {
+                        return 0;
+                    }
+            });
+
+
+        });
+
+
+    });
+
+});
 
 
 var now = Date.now(); // unix time stamp
 var delta = 60*60*12*1000; // 12 hours in milisseconds
 
-var fromTime = new Date(now-delta);
+var fromTime = new Date(now);
 var toTime = new Date(now+delta);
+
+var sim_time = null;
+
+var isFastForward = false;
+var fastForwardRate = 2111;
 
 
 d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
@@ -322,7 +363,8 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 l.start_time = d3.min(l.logs, _a);
                 l.end_time = d3.max(l.logs, _a);
 
-                locations.push(l);
+                //if(locations.length < 400)
+                    locations.push(l);
         });
 
 
@@ -363,9 +405,8 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 return "translate(" + d.x + "," + d.y + ")";
             });*/
 
-        var time_change = true;
 
-        var chron = chroniton()
+        /*var chron = chroniton()
                 .width(width-60).height(50)
                 .tapAxis(function(axis) {
                     axis.ticks(24);
@@ -380,45 +421,27 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 })
                 .playButton(false)
                 .loop(false);
+        */
 
+        var updateRate = 50;
 
-
-        svg.on('mousemove', function () {
-            var coordinates = [0, 0];
-            mouseCoords = d3.mouse(this);
-
-            topLayer.selectAll("text")
-            .data(harbors).transition()
-            .attr("fill-opacity", function(d) {
-
-                    coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
-                    var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
-                    //if(d.name == "")
-                    if(distance < 10*zoom.scale()) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-            });
-
-
-        });
-
-        var updateRate = 200;
-
+        sim_time = now;
 
         var update = function() {
 
+            sim_time += updateRate /10;
+            if(isFastForward) sim_time += updateRate/10 * fastForwardRate;
 
-            chron.setValue( new Date(chron.getValue().getTime() + updateRate/10) );
-
+            if(sim_time > end_time) sim_time = +start_time;
 
             time_change = true;
 
             date = new Date();
             if(time_change) {
-                interpolateHeightsForTime(chron.getValue().getTime()/*date.getTime()*/);
+                interpolateHeightsForTime(sim_time);
                 time_change = false;
+
+                timelabel.text(format(new Date(sim_time)));
 
                 /*sensorPoints = d3.selectAll(".port")
                     .data(locations)
@@ -448,10 +471,6 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
                 d3.selectAll(".point-cell")
                     .data(locations)
-                    .style('fill-opacity', function(d) {
-                        //return 1-localScale(d.localHeightNormalized);
-                        return 1;
-                    })
                     .style('fill',
                            function(d) {
                             return localColorScale(d.localHeightNormalized);
@@ -460,42 +479,35 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                            function(d) {
                             return localColorScale(d.localHeightNormalized);
                     });
-                    /*.style('mix-blend-mode',
-                           function(d) {
-                            return "color-burn";
-                    });*/
 
             }
         };
 
-
         d3.timer(update, updateRate);
-
-
-        d3.select("#slider")
-            .append('div')
-            .call(chron);
-
-        d3.select("#slider")
-            .attr("width", width-60)
-            .style({"left": "30px"});
-
-        d3.select(".chroniton")
-            //.attr("transform", "translate(0,-16)")
-            .on("click", function() {
-            });
-
-        chron.setValue(new Date());
-
+        update();
 
     });
 
+function zoomstart() {
+
+    //console.log("zoomstart");
+    bgLayer.attr("filter","none"); //url(#blur)"
+
+}
+
+function zoomend() {
+
+    //console.log("zoomend");
+    bgLayer.attr("filter","url(#blur)");
+}
 
 
 function zoomed() {
 
+    //console.log("zoomed");
 
    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+
 
    // when itsthe same style for all the points can we just set some css instead of doing the data thing?
    r=0;
@@ -503,7 +515,11 @@ function zoomed() {
         r= 1/d3.event.scale;
    }
 
-   topLayer.selectAll(".harbor")
+   topLayer.selectAll(".harbor_point")
+            .data(harbors)
+            .attr('r', r );
+
+   topLayer.selectAll(".headland_point")
             .data(harbors)
             .attr('r', r );
 
