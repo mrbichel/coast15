@@ -285,7 +285,7 @@ d3.json("./data/harbors.json", function(_harbors) {
 
 
                     if(distance < 10*zoom.scale()) {
-                        return (1/distance);
+                        return (1/(distance/2));
                     } else {
                         return 0;
                     }
@@ -299,7 +299,7 @@ d3.json("./data/harbors.json", function(_harbors) {
                     var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
                     //if(d.name == "")
                     if(distance < 10*zoom.scale()) {
-                        return (1/distance);
+                        return (1/(distance/2));
                     } else {
                         return 0;
                     }

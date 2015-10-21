@@ -16,12 +16,6 @@ body {
 
 
 
-#fastforward {
-    display: inline;
-    float: left;
-    margin: 12px;
-}
-
 
 p {
   margin: 0;
@@ -70,7 +64,7 @@ svg {
 }
 
 #timecontrol {
-    width: 200px;
+    width: 300px;
     height: 60px;
     position: absolute;
     top: 0;
@@ -78,12 +72,22 @@ svg {
     margin: 0;
 }
 
+
+#fastforward {
+    display: inline;
+    float: left;
+    margin: 12px;
+}
+
+
 h1 {
-    width: 100px;
+    text-transform: uppercase;
+    //width: 160px;
     float: left;
     display: inline;
+    padding: 3px;
     margin: 12px;
     font-size: 14px;
-    color: black;
+    color: rgb(17, 20, 22);
 }
 
