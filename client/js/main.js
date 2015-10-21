@@ -41,7 +41,7 @@ var center = projection([0, 55.4]);
 var path = d3.geo.path().projection(projection);
 
 var svg = d3.select("body").append("svg")
-    .attr("class", "loading")
+    .style("opacity", "0")
     .attr("width", width)
     .attr("height", height);
 
@@ -79,10 +79,10 @@ var g = svg.append("g");
 var format = d3.time.format("%A %H:%M");
 var timelabel = d3.select("#timecontrol time");
 var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
-.attr("width", width+300)
-.attr("height", height+300)
-.attr("x", -100)
-.attr("y", -100)
+.attr("width", 2000)
+.attr("height", 2000)
+.attr("x", -2000/2 + width/2)
+.attr("y", -2000/2 + height/2)
 .style("fill","url(#pattern)");
 
 var bgLayer = g.append('g').attr("id", "bg").attr("filter","url(#blur)");
@@ -94,7 +94,6 @@ var zoom = d3.behavior.zoom()
     .on("zoomstart", zoomstart)
     .on("zoom", zoomed)
     .on("zoomend", zoomend);
-
 
 svg.append("rect")
     .attr("class", "overlay")
@@ -108,7 +107,7 @@ svg
 var voronoi = d3.geom.voronoi()
     .x(function(d) { return d.x; })
     .y(function(d) { return d.y; })
-    .clipExtent([[-100, -100], [width + 200, height + 200]]);
+    .clipExtent([[-1000 , -1000], [width+1000, height+1000]]);
 
 var localColorScale  = d3.scale.linear();
 //localColorScale.domain([0, 0.1, 0.9,  1])
@@ -117,10 +116,9 @@ var localColorScale  = d3.scale.linear();
 
 
 // Atlas blues
-localColorScale.domain([0, 0.4, 0.8, 0.9,  1])
-//localColorScale.domain([1, 0.9, 0.8, 0.4,  0])
+//localColorScale.domain([0, 0.75, 0.8, 0.9,  1])
+localColorScale.domain([1, 0.9, 0.8, 0.4,  0])
     .range([d3.rgb(170, 200, 228), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
-
 
 var localScale  = d3.scale.linear();
 localScale.domain([0, 0.9, 1])
@@ -131,7 +129,6 @@ tideScale.domain([-0.2, 14]);
                     //.range(["black", "cyan", "white"]);
 
 var bisect = d3.bisector(function(d) { return d.timestamp; }).right;
-
 
 var interpolateHeightsForTime = function(t) {
 
@@ -178,7 +175,6 @@ var interpolateHeightsForTime = function(t) {
 };
 
 d3.json("./data/uk.json", function(error, uk) {
-
     var subunits = topojson.feature(uk, uk.objects.subunits);
      midLayer.append('g').attr("id", "uk-map")
         .selectAll(".subunit")
@@ -215,7 +211,8 @@ d3.json("./data/harbors.json", function(_harbors) {
                 .attr("class", "harbor_point")
                 .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", "black")
+                }).attr("fill", localColorScale(1)
+                )
                 .attr('r', 0.3);
 
 
@@ -228,10 +225,10 @@ d3.json("./data/harbors.json", function(_harbors) {
             .text(function(d){
                     return d.name;
                 })
-
             .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", "black")
+            }).attr("fill", localColorScale(1))
+            .attr("fill-opacity", 0)
             .attr("class", "harbor_label");
 
     d3.json("./data/headlands.json", function(_headlands) {
@@ -256,9 +253,8 @@ d3.json("./data/harbors.json", function(_harbors) {
                 .attr("class", "headland_point")
                 .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", "red")
+                }).attr("fill", localColorScale(1))
                 .attr('r', 0.3);
-
 
         var texts = topLayer.append('g').attr("id", "headland_names")
                 .selectAll("text")
@@ -270,13 +266,11 @@ d3.json("./data/harbors.json", function(_harbors) {
             .text(function(d){
                     return d.name;
                 })
-
             .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", "red")
+            }).attr("fill", localColorScale(1))
+            .attr("fill-opacity", 0)
             .attr("class", "headland_label");
-
-
 
         svg.on('mousemove', function () {
             var coordinates = [0, 0];
@@ -289,7 +283,6 @@ d3.json("./data/harbors.json", function(_harbors) {
                     coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
                     var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
 
-                    console.log(distance);
 
                     if(distance < 10*zoom.scale()) {
                         return (1/distance);
@@ -327,10 +320,10 @@ var delta = 60*60*12*1000; // 12 hours in milisseconds
 var fromTime = new Date(now);
 var toTime = new Date(now+delta);
 
-var sim_time = null;
+var sim_time = now;
 
 var isFastForward = false;
-var fastForwardRate = 2111;
+var fastForwardRate = 4000;
 
 
 d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
@@ -423,6 +416,8 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 .loop(false);
         */
 
+        svg.transition().style("opacity", 1);
+
         var updateRate = 50;
 
         sim_time = now;
@@ -485,6 +480,15 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
         d3.timer(update, updateRate);
         update();
+
+
+        fastforward = d3.select("#fastforward");
+
+        fastforward.on("click", function() {
+            isFastForward = !isFastForward;
+
+            //fastforward.text("slow");
+        });
 
     });
 

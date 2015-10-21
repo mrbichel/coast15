@@ -1,13 +1,27 @@
+@font-face {
+      font-family: "Lirico SemiBold";
+      src: url("/font/Lirico-SemiBold.otf");
+    }
+
+
 body {
   margin: 0;
   padding:0;
-  font-family: Helvetica, Arial, sans-serif;
-  font-size: 8px;
-  background: prussianblue;
-  color: grey;
+  font-family: "Lirico SemiBold", serif;
+  font-size: 12px;
+  background: rgb(232, 242, 252);
   scroll: no;
   overflow: hidden;
 }
+
+
+
+#fastforward {
+    display: inline;
+    float: left;
+    margin: 12px;
+}
+
 
 p {
   margin: 0;
@@ -16,6 +30,7 @@ p {
 
 svg {
 }
+
 
 #bgimage {
 }
@@ -55,7 +70,7 @@ svg {
 }
 
 #timecontrol {
-    width: 100%;
+    width: 200px;
     height: 60px;
     position: absolute;
     top: 0;
@@ -64,8 +79,11 @@ svg {
 }
 
 h1 {
+    width: 100px;
+    float: left;
+    display: inline;
     margin: 12px;
-    font-size: 10px;
+    font-size: 14px;
     color: black;
 }
 
