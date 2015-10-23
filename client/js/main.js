@@ -79,10 +79,10 @@ var g = svg.append("g");
 var format = d3.time.format("%A %H:%M");
 var timelabel = d3.select("#timecontrol time");
 var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
-.attr("width", 2000)
-.attr("height", 2000)
-.attr("x", -2000/2 + width/2)
-.attr("y", -2000/2 + height/2)
+.attr("width", 6000)
+.attr("height", 6000)
+.attr("x", -6000/2 + width/2)
+.attr("y", -6000/2 + height/2)
 .style("fill","url(#pattern)");
 
 var bgLayer = g.append('g').attr("id", "bg").attr("filter","url(#blur)");
@@ -107,7 +107,7 @@ svg
 var voronoi = d3.geom.voronoi()
     .x(function(d) { return d.x; })
     .y(function(d) { return d.y; })
-    .clipExtent([[-1000 , -1000], [width+1000, height+1000]]);
+    .clipExtent([[-4000 , -4000], [width+4000, height+4000]]);
 
 var localColorScale  = d3.scale.linear();
 //localColorScale.domain([0, 0.1, 0.9,  1])
@@ -147,18 +147,12 @@ var interpolateHeightsForTime = function(t) {
 
         //id = d3.bisect(d.logs, timestamp);
         if(d.next && d.prev) {
-            // d.low = d3.min([d.prev.height, d.next.height]);
-            //    d.high = d3.max([d.prev.height, d.next.height]);
-            // d.heightScale.domain([d.low, d.low*1.01, d.high*0.99, d.high])
-            //    .range(0,0.4,0.6,1);
-
             interpolate = d3.interpolateNumber(d.prev.height, d.next.height);
 
             delta = d.next.timestamp - d.prev.timestamp;
             weight = (t-d.prev.timestamp) / delta;
 
             d.height = interpolate(weight);
-
 
             if(d.next.height > d.prev.height) {
                 // going up
@@ -184,9 +178,6 @@ d3.json("./data/uk.json", function(error, uk) {
         .attr("d", path)
         .attr("fill", localColorScale(0));
 });
-
-
-
 
 d3.json("./data/harbors.json", function(_harbors) {
 
@@ -277,29 +268,29 @@ d3.json("./data/harbors.json", function(_harbors) {
             mouseCoords = d3.mouse(this);
 
             topLayer.selectAll(".harbor_label")
-            .data(harbors).transition()
+            .data(harbors)/*.transition()*/
             .attr("fill-opacity", function(d) {
 
                     coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
                     var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
 
 
-                    if(distance < 10*zoom.scale()) {
-                        return (1/(distance/2));
+                    if(distance < 50.0*zoom.scale()) {
+                        return 1-(distance / 50.0*zoom.scale());
                     } else {
                         return 0;
                     }
             });
 
             topLayer.selectAll(".headland_label")
-            .data(headlands).transition()
+            .data(headlands)/*.transition()*/
             .attr("fill-opacity", function(d) {
 
                     coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
                     var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
                     //if(d.name == "")
-                    if(distance < 10*zoom.scale()) {
-                        return (1/(distance/2));
+                    if(distance < 50.0*zoom.scale()) {
+                        return 1-(distance/50.0*zoom.scale());
                     } else {
                         return 0;
                     }
@@ -357,7 +348,7 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 l.end_time = d3.max(l.logs, _a);
 
                 //if(locations.length < 400)
-                    locations.push(l);
+                locations.push(l);
         });
 
 
@@ -424,8 +415,12 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
         var update = function() {
 
-            sim_time += updateRate /10;
-            if(isFastForward) sim_time += updateRate/10 * fastForwardRate;
+            //sim_time += updateRate /10;
+            if(isFastForward) {
+                sim_time += updateRate/10 * fastForwardRate;
+            } else {
+                sim_time = Date.now();
+            }
 
             if(sim_time > end_time) sim_time = +start_time;
 
@@ -481,7 +476,6 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
         d3.timer(update, updateRate);
         update();
 
-
         fastforward = d3.select("#fastforward");
 
         fastforward.on("click", function() {
@@ -503,6 +497,9 @@ function zoomend() {
 
     //console.log("zoomend");
     bgLayer.attr("filter","url(#blur)");
+
+
+
 }
 
 
@@ -512,11 +509,10 @@ function zoomed() {
 
    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 
-
-   // when itsthe same style for all the points can we just set some css instead of doing the data thing?
+          // when itsthe same style for all the points can we just set some css instead of doing the data thing?
    r=0;
    if(d3.event.scale > 2) {
-        r= 1/d3.event.scale;
+        r= 1.8/d3.event.scale;
    }
 
    topLayer.selectAll(".harbor_point")
@@ -526,6 +522,10 @@ function zoomed() {
    topLayer.selectAll(".headland_point")
             .data(harbors)
             .attr('r', r );
+
+    fontSize = 60/d3.event.scale;
+
+    topLayer.selectAll("#harbor_names, #headland_names").style("font-size", fontSize + "px");
 
 
 }
