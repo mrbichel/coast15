@@ -1,3 +1,71 @@
+audio = {
+
+    // Path to audio files
+    audioPath: 'data/audio/',
+
+    // Background audio
+    backgroundSound: 'background.mp3',
+    fastForwardSound: 'fastforward.mp3',
+    // Random audio files
+    randomAudio: new Array(
+                'marine01.mp3',
+                'marine02.mp3',
+                'marine03.mp3',
+                'marine04.mp3',
+                'marine05.mp3',
+                'marine06.mp3',
+                'marine07.mp3',
+                'marine08.mp3',
+                'marine09.mp3',
+                'marine10.mp3'
+        ),
+
+    // Timeout in seconds
+    randomTimeout: 15,  
+
+    // Bell sound
+    bell: 'bell.mp3',
+    
+    init: function(){
+        // Create necessary elements
+        this.playBackground();
+    },
+    playBackground: function(){
+        // Background audio
+        var bgsrc = this.audioPath + this.backgroundSound;
+        this.bg = document.createElement('audio');
+        this.bg.setAttribute('src', bgsrc);
+        this.bg.play();
+
+        // Random 
+        //this.random = document.createElement('audio');
+        //setInterval('audio.playRandom()', this.randomTimeout * 1000);
+
+        var fastForwardSrc = this.audioPath + this.fastForwardSound;
+        this.fastForward = document.createElement('audio');
+        this.fastForward.setAttribute('src', fastForwardSrc);
+
+        // Bell 
+        bellsrc = this.audioPath + this.bell;
+        this.bell = document.createElement('audio');
+        this.bell.setAttribute('src', bellsrc);
+    },
+    playRandom: function(){
+        var rand = this.audioPath + this.randomAudio[Math.floor(Math.random() * this.randomAudio.length)];
+        audio.random.setAttribute('src', rand);
+        audio.random.play();
+    },
+    playBell: function(){
+        this.bell.play();
+    },
+    pause: function(){
+        this.bg.pause();
+    },
+    play: function(){
+        this.bg.play();
+    },
+}
+
 
 function distance(p1,p2){
     var dx = p2.x-p1.x;
@@ -68,7 +136,7 @@ var pattern = defs.append("pattern")
     .attr("x", 0).attr("y", 0);
 
 pattern.append("svg:image")
-                .attr("xlink:href", "/img/bluetile.jpg")
+                .attr("xlink:href", "/data/img/bluetile.jpg")
                 .attr("x", 0)
                 .attr("y", 0)
                 .attr("width", 120)
@@ -138,14 +206,7 @@ var interpolateHeightsForTime = function(t) {
             id = bisect(d.logs, t);
             d.prev = d.logs[id-1];
             d.next = d.logs[id];
-
-            if(d.next && d.prev) {
-
-            }
-
         }
-
-        //id = d3.bisect(d.logs, timestamp);
         if(d.next && d.prev) {
             interpolate = d3.interpolateNumber(d.prev.height, d.next.height);
 
@@ -155,7 +216,6 @@ var interpolateHeightsForTime = function(t) {
             d.height = interpolate(weight);
 
             if(d.next.height > d.prev.height) {
-                // going up
                 d.localHeightNormalized = weight;
             } else {
                 d.localHeightNormalized = 1-weight;
@@ -163,6 +223,12 @@ var interpolateHeightsForTime = function(t) {
 
         } else {
             d.height = null;
+        }
+
+        if(d.name == "Land's end" || d.name == "London") {
+            if(d.localHeightNormalized > 0.98) {
+                audio.playBell();
+            } 
         }
 
     });
@@ -314,7 +380,7 @@ var toTime = new Date(now+delta);
 var sim_time = now;
 
 var isFastForward = false;
-var fastForwardRate = 4000;
+var fastForwardRate = 20000;
 
 
 d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
@@ -409,17 +475,20 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
         svg.transition().style("opacity", 1);
 
-        var updateRate = 50;
+        audio.init();
 
+        var updateRate = 100;
         sim_time = now;
 
         var update = function() {
+
 
             //sim_time += updateRate /10;
             if(isFastForward) {
                 sim_time += updateRate/10 * fastForwardRate;
             } else {
-                sim_time = Date.now();
+                interp = d3.interpolateNumber(Date.now(), sim_time);
+                sim_time = interp(0.5);
             }
 
             if(sim_time > end_time) sim_time = +start_time;
@@ -433,34 +502,10 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
                 timelabel.text(format(new Date(sim_time)));
 
-                /*sensorPoints = d3.selectAll(".port")
-                    .data(locations)
-                    .attr("r", function(d) {
-
-                        if(d.height) {
-                            if(d.high_flag)
-                                return //d.localHeightNormalized*200;
-                            else
-                                return //d.localHeightNormalized*100;
-                        }
-
-                        //return localScale(d.localHeightNormalized)*60;
-                        return 0.5;
-
-                    })
-                    .style('fill',function(d) {
-                           return 'none';
-                       }
-                    )
-                    .style('stroke',
-                           function(d) {
-                            //return localColorScale(d.localHeightNormalized);
-                            return 'none';
-                    });*/
-
 
                 d3.selectAll(".point-cell")
                     .data(locations)
+                    .transition()
                     .style('fill',
                            function(d) {
                             return localColorScale(d.localHeightNormalized);
@@ -478,8 +523,15 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
         fastforward = d3.select("#fastforward");
 
-        fastforward.on("click", function() {
-            isFastForward = !isFastForward;
+        fastforward.on("mousedown", function() {
+            isFastForward = true; 
+
+            //fastforward.text("slow");
+        });
+
+        d3.select("body")
+        .on("mouseup", function() {
+            isFastForward = false;
 
             //fastforward.text("slow");
         });

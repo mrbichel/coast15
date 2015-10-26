@@ -70,22 +70,38 @@ svg {
     margin: 0;
 }
 
-
 #fastforward {
-    display: inline;
-    float: left;
-    margin: 12px;
+  margin: 0px 14px;
+  background: #3b7d9c;
+  -webkit-border-radius: 4;
+  -moz-border-radius: 4;
+  border-radius: 4px;
+  color: rgb(200,219,229);
+  font-size: 16px;
+  padding: 0px 6px 4px 6px;
+  text-decoration: none;
+  border: none;
+  outline: 0;
+  cursor: pointer;
 }
+
+#fastforward:hover {
+  background: rgb(77,163,203);
+  color: rgb(220,241,252);
+}
+
+#fastforward:active {
+  background: rgb(41,93,109);
+  color: rgb(200,219,229);
+}
+
 
 
 h1 {
     text-transform: uppercase;
-    //width: 160px;
-    float: left;
-    display: inline;
     padding: 3px;
-    margin: 12px;
+    margin: 12px 0px 4px 12px;
     font-size: 14px;
-    color: rgb(17, 20, 22);
+    color: #3b7d9c;;
 }
 
