@@ -21,42 +21,59 @@ audio = {
         ),
 
     // Timeout in seconds
-    randomTimeout: 15,  
+    randomTimeout: 80,  
 
     // Bell sound
     bell: 'bell.mp3',
     
     init: function(){
         // Create necessary elements
-        this.playBackground();
-    },
-    playBackground: function(){
-        // Background audio
-        var bgsrc = this.audioPath + this.backgroundSound;
-        this.bg = document.createElement('audio');
-        this.bg.setAttribute('src', bgsrc);
-        this.bg.play();
 
         // Random 
-        //this.random = document.createElement('audio');
-        //setInterval('audio.playRandom()', this.randomTimeout * 1000);
+        this.random = document.createElement('audio');
+        setInterval('audio.playRandom()', this.randomTimeout * 1000);
 
         var fastForwardSrc = this.audioPath + this.fastForwardSound;
         this.fastForward = document.createElement('audio');
         this.fastForward.setAttribute('src', fastForwardSrc);
+
+        // Background audio
+        var bgsrc = this.audioPath + this.backgroundSound;
+        this.bg = document.createElement('audio');
+        this.bg.setAttribute('src', bgsrc);
 
         // Bell 
         bellsrc = this.audioPath + this.bell;
         this.bell = document.createElement('audio');
         this.bell.setAttribute('src', bellsrc);
     },
+    playBackground: function(){
+        this.bg.play();
+        this.bg.addEventListener('ended', function() {
+            audio.bg.currentTime = 0;
+            audio.bg.play();
+        }, false);
+
+    },
     playRandom: function(){
         var rand = this.audioPath + this.randomAudio[Math.floor(Math.random() * this.randomAudio.length)];
-        audio.random.setAttribute('src', rand);
-        audio.random.play();
+        this.random.setAttribute('src', rand);
+        this.random.volume = 0.3;
+        this.random.play();
     },
     playBell: function(){
         this.bell.play();
+    },
+    resetBell: function(){        
+        this.bell.pause();
+        this.bell.currentTime = 0;
+    },
+    playFastForward: function(){
+        this.fastForward.play();
+    },
+    stopFastForward: function(){        
+        this.fastForward.pause();
+        this.fastForward.currentTime = 0;
     },
     pause: function(){
         this.bg.pause();
@@ -66,6 +83,7 @@ audio = {
     },
 }
 
+var ringBell = false; 
 
 function distance(p1,p2){
     var dx = p2.x-p1.x;
@@ -95,7 +113,6 @@ var scale,
 
 var locations = [];
 var harbors = [];
-var headlands = [];
 
 var projection = d3.geo.albers()
     .center([0, 55.4])
@@ -186,7 +203,7 @@ var localColorScale  = d3.scale.linear();
 // Atlas blues
 //localColorScale.domain([0, 0.75, 0.8, 0.9,  1])
 localColorScale.domain([1, 0.9, 0.8, 0.4,  0])
-    .range([d3.rgb(170, 200, 228), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
+    .range([d3.rgb(170, 200, 228).darker(1.2), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
 
 var localScale  = d3.scale.linear();
 localScale.domain([0, 0.9, 1])
@@ -223,12 +240,16 @@ var interpolateHeightsForTime = function(t) {
 
         } else {
             d.height = null;
-        }
-
-        if(d.name == "Land's end" || d.name == "London") {
+        }        
+        if(d.name == "Penzance (Newlyn)"/*Land's end"*/ || d.name == "London Bridge (Tower Pier)") {
             if(d.localHeightNormalized > 0.98) {
-                audio.playBell();
-            } 
+                if(!ringBell) {
+                    audio.playBell();
+                    ringBell = true;
+                }
+            } else {
+                ringBell = false;
+            }
         }
 
     });
@@ -272,7 +293,6 @@ d3.json("./data/harbors.json", function(_harbors) {
                 )
                 .attr('r', 0.3);
 
-
         var texts = topLayer.append('g').attr("id", "harbor_names")
                  .selectAll("text")
                 .data(harbors)
@@ -288,47 +308,6 @@ d3.json("./data/harbors.json", function(_harbors) {
             .attr("fill-opacity", 0)
             .attr("class", "harbor_label");
 
-    d3.json("./data/headlands.json", function(_headlands) {
-        _headlands.forEach(function(d) {
-                l = [];
-                l.name = d.name;
-                var position = projection([d.lng, d.lat]);
-                l.x = position[0];
-                l.y = position[1];
-                headlands.push(l);
-        });
-
-        topLayer.append('g')
-                .attr("id", "headlands")
-                .selectAll("circle")
-                .data(headlands)
-                .enter()
-                .append("circle")
-                .attr("id", function(d) {
-                    return d.name;
-                })
-                .attr("class", "headland_point")
-                .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", localColorScale(1))
-                .attr('r', 0.3);
-
-        var texts = topLayer.append('g').attr("id", "headland_names")
-                .selectAll("text")
-                .data(headlands)
-                .attr("class", "headland_label")
-                .enter();
-
-        texts.append("text")
-            .text(function(d){
-                    return d.name;
-                })
-            .attr("transform", function(d) {
-                    return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", localColorScale(1))
-            .attr("fill-opacity", 0)
-            .attr("class", "headland_label");
-
         svg.on('mousemove', function () {
             var coordinates = [0, 0];
             mouseCoords = d3.mouse(this);
@@ -340,34 +319,13 @@ d3.json("./data/harbors.json", function(_harbors) {
                     coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
                     var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
 
-
                     if(distance < 50.0*zoom.scale()) {
                         return 1-(distance / 50.0*zoom.scale());
                     } else {
                         return 0;
                     }
-            });
-
-            topLayer.selectAll(".headland_label")
-            .data(headlands)/*.transition()*/
-            .attr("fill-opacity", function(d) {
-
-                    coords = getScreenCoords(d.x, d.y, zoom.translate(), zoom.scale());
-                    var distance = distanceApprox({x: mouseCoords[0], y: mouseCoords[1]}, coords);
-                    //if(d.name == "")
-                    if(distance < 50.0*zoom.scale()) {
-                        return 1-(distance/50.0*zoom.scale());
-                    } else {
-                        return 0;
-                    }
-            });
-
-
         });
-
-
     });
-
 });
 
 
@@ -380,8 +338,9 @@ var toTime = new Date(now+delta);
 var sim_time = now;
 
 var isFastForward = false;
-var fastForwardRate = 20000;
+var fastForwardRate = 60000;
 
+audio.init();
 
 d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
 
@@ -439,45 +398,13 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
                 if(d.cell){
                     return d.cell.length ? "M" + d.cell.join("L") + "Z" : null;
                 }
-            })
-            ;
-        /*var sensorPoints = topLayer.append('g')
-            .attr("id", "locations")
-            .selectAll("circle")
-            .data(locations)
-            .enter()
-            .append("circle")
-            .attr("id", function(d) {
-                return d.name;
-            })
-            .attr("class", "port")
-            .attr("transform", function(d) {
-                return "translate(" + d.x + "," + d.y + ")";
-            });*/
-
-
-        /*var chron = chroniton()
-                .width(width-60).height(50)
-                .tapAxis(function(axis) {
-                    axis.ticks(24);
-                    axis.orient("bottom");
-                    axis.tickPadding(0);
-                    axis.tickFormat(d3.time.format('%H'));
-                })
-                .labelFormat(d3.time.format('%A %X'))
-                .domain([start_time, end_time])
-                .on('change', function(d) {
-                    time_change = true;
-                })
-                .playButton(false)
-                .loop(false);
-        */
+            });
 
         svg.transition().style("opacity", 1);
 
-        audio.init();
+        audio.playBackground();
 
-        var updateRate = 100;
+        var updateRate = 50;
         sim_time = now;
 
         var update = function() {
@@ -485,13 +412,13 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
             //sim_time += updateRate /10;
             if(isFastForward) {
-                sim_time += updateRate/10 * fastForwardRate;
+                sim_time += fastForwardRate / (updateRate/100);
             } else {
                 interp = d3.interpolateNumber(Date.now(), sim_time);
-                sim_time = interp(0.5);
+                sim_time = interp(0.8);
             }
 
-            if(sim_time > end_time) sim_time = +start_time;
+            if(sim_time > end_time) sim_time = +end_time;
 
             time_change = true;
 
@@ -505,7 +432,7 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
                 d3.selectAll(".point-cell")
                     .data(locations)
-                    .transition()
+                    //.transition()
                     .style('fill',
                            function(d) {
                             return localColorScale(d.localHeightNormalized);
@@ -525,6 +452,7 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
 
         fastforward.on("mousedown", function() {
             isFastForward = true; 
+            audio.playFastForward();
 
             //fastforward.text("slow");
         });
@@ -532,6 +460,7 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
         d3.select("body")
         .on("mouseup", function() {
             isFastForward = false;
+            audio.stopFastForward();
 
             //fastforward.text("slow");
         });
@@ -550,8 +479,6 @@ function zoomend() {
     //console.log("zoomend");
     bgLayer.attr("filter","url(#blur)");
 
-
-
 }
 
 
@@ -563,21 +490,17 @@ function zoomed() {
 
           // when itsthe same style for all the points can we just set some css instead of doing the data thing?
    r=0;
+   fontSize = 0;
    if(d3.event.scale > 2) {
-        r= 1.8/d3.event.scale;
+        r= 1.2/d3.event.scale;
+        fontSize = 14/d3.event.scale;
    }
 
    topLayer.selectAll(".harbor_point")
             .data(harbors)
             .attr('r', r );
 
-   topLayer.selectAll(".headland_point")
-            .data(harbors)
-            .attr('r', r );
-
-    fontSize = 60/d3.event.scale;
-
-    topLayer.selectAll("#harbor_names, #headland_names").style("font-size", fontSize + "px");
+    topLayer.selectAll("#harbor_names").style("font-size", fontSize + "px");
 
 
 }
