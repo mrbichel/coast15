@@ -1,32 +1,65 @@
+Installation steps on clean ubuntu server: 
 
-Installing client:
-Run bower install.
-Update reference to api.coast.johan.cc in main.js
+# base system
 
-Installing server:
+    $ ssh -i "CoastTania.pem" ubuntu@52.16.36.238
 
-to get dependency scipy running:  
+    $ sudo apt-get update
+    $ sudo apt-get upgrade
+    $ sudo apt-get install nginx uwsgi uwsgi-plugin-python mongodb git python-pip python-dev
 
-    $ install libblas-dev liblapack-dev
+# dependencies for scipy
+    
+    $ sudo apt-get install libblas-dev liblapack-dev gfortran
 
-    $ apt-get install gfortran
+# python
 
-The rest should install using the requirements.txt file.
+    $ sudo pip install virtualenv
+    $ sudo pip install virtualenvwrapper
+    $ export WORKON_HOME=~/.virtualenvs
 
-Install mongodb
+Add this line to the end of ~/.bashrc so that the virtualenvwrapper commands are loaded.
 
-    $ apt-get install mongodb
+    . /usr/local/bin/virtualenvwrapper.sh
 
-Configure db path 
+Reload .bashrc with the command . .bashrc 
 
-Start of with the copy of my database.
+Create a new virtualenv
 
-Configuring nginx
+    $ mkvirtualenv coast
+
+# Setting up the project
+
+    $ mkdir srv
+    $ cd ~/srv/
+    $ git clone https://github.com/mrbichel/coast15.git
+    $ cd ~/srv/coast15/server
+    $ workon coast
+    $ pip install -r requirements.txt
+
+# Setup and download the database
+
+    $ sudo mkdir /data
+    (From local system) $ scp [initial_coast_db.tar.gz] ubuntu@52.16.36.238:~/db.tar.gz
+    $ tar -zxvf ~/db.tar.gz
+    $ sudo mv ~/db /data/
+    $ sudo chown -R mongodb:mongodb /data/db
+
+Edit `/etc/mongodb/mongodb.conf` at top of file change dbpath to:
+
+    dbpath=/data/db
+
+    $ sudo service mongodb reload
+
+
+# Configure nginx 
+    
+Add nginx configuration file `/etc/nginx/sites-available/coast.conf` remember to replace domain.
 
 ```
 server {
         listen 80;
-        server_name coast.johan.cc;
+        server_name [DOMAIN];
 
         location / {
                 index index.html;
@@ -36,7 +69,7 @@ server {
 
 server {
     listen 80;
-    server_name api.coast.johan.cc;
+    server_name api.[DOMAIN];
 
     location / {
        uwsgi_pass unix:///tmp/uwsgi_coast.sock;
@@ -45,17 +78,20 @@ server {
 
 }
 ```
+    $ sudo ln -s /etc/nginx/sites-available/coast.conf /etc/nginx/sites-enabled/
+    $ sudo service nginx reload
 
 
-Confuring uwsgi, coast.init
-
+# Configure uwsgi 
+    
+Add a uwsgi configuration file `/etc/uwsgi/app-available/coast.ini`
+    
 ```
 [uwsgi]
-user = coast
-
+user = ubuntu
 uid = %(user)
 pythonpath = /home/%(user)/srv/coast15/server
-home = /home/%(user)/.virtualenvs/coast2015
+home = /home/%(user)/.virtualenvs/coast
 module = app
 socket = /tmp/uwsgi_%n.sock
 chmod-socket = 666
@@ -64,8 +100,10 @@ touch-reload = /home/%(user)/srv/coast15/server/app.py
 callable = app
 ```
 
-Set up a cron script to execute ukho_scraper.py at least weekly.
+    $ sudo ln -s /etc/uwsgi/apps-available/coast.ini /etc/uwsgi/apps-enabled/
+    $ sudo service uwsgi reload
 
-
-
+# Add crontab
+    
+    
 
