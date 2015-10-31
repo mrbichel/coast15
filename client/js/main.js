@@ -4,8 +4,8 @@ audio = {
     audioPath: 'data/audio/',
 
     // Background audio
-    backgroundSound: 'background.mp3',
-    fastForwardSound: 'fastforward.mp3',
+    backgroundSound: '12832hz.mp3',
+    fastForwardSound: 'bell.mp3',
     // Random audio files
     randomAudio: new Array(
                 'marine01.mp3',
@@ -58,7 +58,7 @@ audio = {
     playRandom: function(){
         var rand = this.audioPath + this.randomAudio[Math.floor(Math.random() * this.randomAudio.length)];
         this.random.setAttribute('src', rand);
-        this.random.volume = 0.3;
+        this.random.volume = 0.15;
         this.random.play();
     },
     playBell: function(){
@@ -203,7 +203,7 @@ var localColorScale  = d3.scale.linear();
 // Atlas blues
 //localColorScale.domain([0, 0.75, 0.8, 0.9,  1])
 localColorScale.domain([1, 0.9, 0.8, 0.4,  0])
-    .range([d3.rgb(170, 200, 228).darker(1.2), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
+    .range([d3.rgb(170, 200, 228).darker(), d3.rgb(189, 219, 239), d3.rgb(211, 227, 241), d3.rgb(232, 242, 252), d3.rgb(250, 254, 255)]);
 
 var localScale  = d3.scale.linear();
 localScale.domain([0, 0.9, 1])
@@ -289,9 +289,9 @@ d3.json("./data/harbors.json", function(_harbors) {
                 .attr("class", "harbor_point")
                 .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-                }).attr("fill", localColorScale(1)
+                }).attr("fill", d3.rgb(localColorScale(1)).brighter()
                 )
-                .attr('r', 0.3);
+                .attr('r', 0);
 
         var texts = topLayer.append('g').attr("id", "harbor_names")
                  .selectAll("text")
@@ -304,7 +304,7 @@ d3.json("./data/harbors.json", function(_harbors) {
                 })
             .attr("transform", function(d) {
                     return "translate(" + d.x + "," + d.y+ ")";
-            }).attr("fill", localColorScale(1))
+            }).attr("fill", d3.rgb(localColorScale(1)).brighter())
             .attr("fill-opacity", 0)
             .attr("class", "harbor_label");
 
@@ -327,7 +327,6 @@ d3.json("./data/harbors.json", function(_harbors) {
         });
     });
 });
-
 
 var now = Date.now(); // unix time stamp
 var delta = 60*60*12*1000; // 12 hours in milisseconds
@@ -407,8 +406,8 @@ d3.json("http://api.coast.johan.cc/cloc?from=" + fromTime.toUTCString() + "&to="
         var updateRate = 50;
         sim_time = now;
 
-        var update = function() {
 
+        var update = function() {
 
             //sim_time += updateRate /10;
             if(isFastForward) {

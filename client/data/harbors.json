@@ -1400,15 +1400,11 @@
     "lng": -5.066666700000001
   },
   {
-    "lat": 22.271549,
-    "name": "Harlech Point",
-    "lng": 114.144597
-  },
-  {
-    "lat": 53.3666667,
+    "lat": 53.345633,
     "name": "Ormes Head",
-    "lng": -3.9166667
+    "lng": -3.878174
   },
+   
   {
     "lat": 54.5,
     "name": "St Bees Head",
@@ -1620,11 +1616,6 @@
     "lng": 127.6791568
   },
   {
-    "lat": 51.6421502,
-    "name": "Holliwell Point",
-    "lng": -0.404816
-  },
-  {
     "lat": 51.5849007,
     "name": "Foulness Point",
     "lng": 0.9379985999999999
@@ -1750,11 +1741,6 @@
     "lat":  51.782869,
     "name": "Roches Point",
     "lng": -8.276138
-  },
-    {
-    "lat": 51.450027,
-    "name": "Mizen Head ( southerly point)",
-    "lng": -9.819245
   },
     {
     "lat": 53.800321,

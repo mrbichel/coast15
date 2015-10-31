@@ -5,9 +5,7 @@ env.hosts = ['tango.johan.cc']
 env.directory = '/home/coast/srv/coast15'
 env.activate = 'source /home/coast/.virtualenvs/coast2015/bin/activate'
 
-
 # with -u coast -
-
 #def configure_host():
     # copy nginx.conf to server
     # add to /etc/nginx/sites-available
@@ -20,6 +18,10 @@ def build_client():
 
 def deploy_client():
     put('./client', env.directory)
+
+def deploy_core():
+    put('./client/index.html', env.directory)
+    put('./client/js', env.directory)
 
 def deploy_server():
     with cd(env.directory):
