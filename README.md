@@ -1,87 +1,69 @@
-# coast15
 
-##TODO
+Installing client:
+Run bower install.
+Update reference to api.coast.johan.cc in main.js
 
- - [ ] mongo installation bash script
- - [ ] sketch frontend
- - [ ] figure out interpolate algo.
-         - use RBF
+Installing server:
 
-             ```python
-                import numpy as np
-                import scipy.interpolate as interpolate
-                M  = [2x2]
-                M.shape == (r.size, c.size)),
-                rr, cc = np.meshgrid(r, c)
-                vals = ~np.isnan(M)
-                f = interpolate.Rbf(rr[vals], cc[vals], M[vals], function='linear')
-                interpolated = f(rr, cc)
-             ```
+to get dependency scipy running:
+$ install libblas-dev liblapack-dev
 
-             and play with the possilbe funcitons (and their parameter.)
-           - use gaussian processes
+$ apt-get install gfortran
 
-             ```python
-                from sklearn.gaussian_process import GaussianProcess
-                gp = GaussianProcess(theta0=0.1, thetaL=.001, thetaU=1., nugget=0.01)
-                gp.fit(X=np.column_stack([rr[vals],cc[vals]]), y=M[vals])
-                rr_cc_as_cols = np.column_stack([rr.flatten(), cc.flatten()])
-                interpolated = gp.predict(rr_cc_as_cols).reshape(M.shape)
-             ```
-             in this case there are oh so much parameters to try out.
+The rest should install using the requirements.txt file.
 
- - [ ] figure out which kind of vis.
+Install mongodb
+$ apt-get install mongodb
 
-         - clusters over map (i.e. hexbins) see fe.x https://www.mapbox.com/blog/heatmaps-and-grids-with-turf/
+Configure db path 
 
-         - smooth overlay (f.ex. http://mourner.github.io/simpleheat/demo/ fast!)
+Start of with the copy of my database.
 
-         - https://github.com/tmcw/chroniton for time slider
-
-##DATA
-
-http://www.naturalearthdata.com/features/
-Useful guide for creting the geojson files: http://bost.ocks.org/mike/map/
-Data from https://www.tidetimes.org.uk/
-
-##Architecture
-```
-┌─────────────┐
-│   Backend   │
-├─────────────┴────────────────────────────────────────────┐
-│             ┌──────────────────────────────┐             │
-│             │           Scraper            │             │
-│             └──────────────────────────────┘             │
-│                             │                            │
-│                             ▼                            │
-│              ┌─────────────────────────────┐             │
-│              │          database           │             │
-│              └─────────────────────────────┘             │
-│                             │                            │
-│                             │                            │
-│                             ▼                            │
-│             ┌──────────────────────────────┐             │
-│             │       interpolate/grid       │             │
-│             └──────────────────────────────┘             │
-│                             │                            │
-│                             ▼                            │
-│              ┌─────────────────────────────┐             │
-│              │          database           │             │
-│              └─────────────────────────────┘             │
-│                             ▲                            │
-│                             │                            │
-│                             │                            │
-│              ┌────────────────────────────┐              │
-│              │          REST_API          │              │
-│              │                            │              │
-│              └──────────────┬─────────────┘              │
-└─────────────────────────────┼────────────────────────────┘
-                              │
-                              │
-                              ▼
+Configuring nginx
 
 ```
+server {
+        listen 80;
+        server_name coast.johan.cc;
+
+        location / {
+                index index.html;
+                root /home/coast/srv/coast15/client;
+        }
+}
+
+server {
+    listen 80;
+    server_name api.coast.johan.cc;
+
+    location / {
+       uwsgi_pass unix:///tmp/uwsgi_coast.sock;
+       include uwsgi_params;
+    }
+
+}
+``
 
 
-inspiration
-https://www.youtube.com/watch?v=5zi7N06JXD4
+Confuring uwsgi, coast.init
+
+```
+[uwsgi]
+user = coast
+
+uid = %(user)
+pythonpath = /home/%(user)/srv/coast15/server
+home = /home/%(user)/.virtualenvs/coast2015
+module = app
+socket = /tmp/uwsgi_%n.sock
+chmod-socket = 666
+plugins = http,python
+touch-reload = /home/%(user)/srv/coast15/server/app.py
+callable = app
+```
+
+Set up a cron script to execute ukho_scraper.py at least weekly.
+
+
+
+
