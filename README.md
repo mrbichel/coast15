@@ -5,15 +5,17 @@ Update reference to api.coast.johan.cc in main.js
 
 Installing server:
 
-to get dependency scipy running:
-$ install libblas-dev liblapack-dev
+to get dependency scipy running:  
 
-$ apt-get install gfortran
+    $ install libblas-dev liblapack-dev
+
+    $ apt-get install gfortran
 
 The rest should install using the requirements.txt file.
 
 Install mongodb
-$ apt-get install mongodb
+
+    $ apt-get install mongodb
 
 Configure db path 
 
@@ -42,7 +44,7 @@ server {
     }
 
 }
-``
+```
 
 
 Confuring uwsgi, coast.init
