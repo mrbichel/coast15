@@ -27,7 +27,7 @@ svg {
 }
 
 #bg {
-  mix-blend-mode: hard-light; //multiply good
+  mix-blend-mode: hard-light;
 }
 
 #mid {

@@ -1,3 +1,24 @@
+var browser = {
+        chrome: false,
+        mozilla: false,
+        opera: false,
+        msie: false,
+        safari: false
+    };
+    var sUsrAg = navigator.userAgent;
+    if(sUsrAg.indexOf("Chrome") > -1) {
+        browser.chrome = true;
+    } else if (sUsrAg.indexOf("Safari") > -1) {
+        browser.safari = true;
+    } else if (sUsrAg.indexOf("Opera") > -1) {
+        browser.opera = true;
+    } else if (sUsrAg.indexOf("Firefox") > -1) {
+        browser.mozilla = true;
+    } else if (sUsrAg.indexOf("MSIE") > -1) {
+        browser.msie = true;
+    }
+
+
 audio = {
 
     // Path to audio files
@@ -130,14 +151,7 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-var svgBg = d3.select("body").append("div")
-    .attr("id", "background")
-    .append("svg")
-    .style("opacity", "0")
-    .attr("width", width)
-    .attr("height", height);
-
-var defs = svgBg.append('defs');
+var defs = svg.append('defs');
 
 var blurAmount = 10;
 
@@ -166,19 +180,18 @@ pattern.append("svg:image")
                 .attr("height", 120);
 
 var g = svg.append("g");
-var gBg = svgBg.append("g");
 
 
 var format = d3.time.format("%A %H:%M");
 var timelabel = d3.select("#timecontrol time");
-var bgPatternLayer = gBg.append('rect').attr("id", "bgpattern")
+var bgPatternLayer = g.append('rect').attr("id", "bgpattern")
 .attr("width", 6000)
 .attr("height", 6000)
 .attr("x", -6000/2 + width/2)
 .attr("y", -6000/2 + height/2)
 .style("fill","url(#pattern)");
 
-var bgLayer = gBg.append('g').attr("id", "bg").attr("filter", "url(#blur)");
+var bgLayer = g.append('g').attr("id", "bg").attr("filter", "url(#blur)");
 var midLayer = g.append('g').attr("id", "mid");
 var topLayer = g.append('g').attr("id", "top");
 
@@ -193,17 +206,7 @@ svg.append("rect")
     .attr("width", width)
     .attr("height", height);
 
-
-svgBg.append("rect")
-    .attr("class", "overlay")
-    .attr("width", width)
-    .attr("height", height);
-
 svg
-    .call(zoom)
-    .call(zoom.event);
-
-svgBg
     .call(zoom)
     .call(zoom.event);
 
@@ -418,7 +421,6 @@ d3.json("http://ec2-52-16-36-238.eu-west-1.compute.amazonaws.com//cloc?from=" + 
             });
 
         svg.transition().style("opacity", 1);
-        svgBg.transition().style("opacity", 1);
 
         audio.playBackground();
 
@@ -488,6 +490,7 @@ d3.json("http://ec2-52-16-36-238.eu-west-1.compute.amazonaws.com//cloc?from=" + 
 function zoomstart() {
 
     //console.log("zoomstart");
+
     bgLayer.attr("filter","none"); //url(#blur)"
 
 }
@@ -495,7 +498,9 @@ function zoomstart() {
 function zoomend() {
 
     //console.log("zoomend");
-    bgLayer.attr("filter","url(#blur)");
+    if(browser.chrome || browser.mozilla) {
+        bgLayer.attr("filter","url(#blur)");
+    }
 
 }
 
@@ -505,7 +510,6 @@ function zoomed() {
     //console.log("zoomed");
 
    g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
-   gBg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
 
           // when itsthe same style for all the points can we just set some css instead of doing the data thing?
    r=0;
