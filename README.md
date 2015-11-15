@@ -105,5 +105,9 @@ callable = app
 
 # Add crontab
     
-    
+    $ crontab -e
+
+    Add 
+        `0 0 1-31/2 * * /home/ubuntu/.virtualenvs/coast/bin/python /home/ubuntu/srv/coast15/server/ukho_scraper.py > /home/ubuntu/log/ukho_scraper.log`
+
 
