@@ -362,7 +362,7 @@ var fastForwardRate = 60000;
 
 audio.init();
 
-d3.json("http://ec2-52-16-36-238.eu-west-1.compute.amazonaws.com//cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
+d3.json("http://ec2-52-31-125-6.eu-west-1.compute.amazonaws.com/cloc?from=" + fromTime.toUTCString() + "&to=" + toTime.toUTCString(), function(json) {
 
         json.locations.forEach(function(d) {
                 l = [];
