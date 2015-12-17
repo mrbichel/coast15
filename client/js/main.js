@@ -65,8 +65,7 @@ audio = {
 
         // Bell 
         bellsrc = this.audioPath + this.bell;
-        this.bell = document.createElement('audio');
-        this.bell.setAttribute('src', bellsrc);
+        
     },
     playBackground: function(){
         this.bg.play();
@@ -82,13 +81,15 @@ audio = {
         this.random.volume = 0.15;
         this.random.play();
     },
+
     playBell: function(){
-        this.bell.play();
+
+        var _bell = document.createElement('audio');
+        _bell.setAttribute('src', bellsrc);
+        _bell.play();
+
     },
-    resetBell: function(){        
-        this.bell.pause();
-        this.bell.currentTime = 0;
-    },
+
     playFastForward: function(){
         this.fastForward.play();
     },
@@ -238,6 +239,8 @@ var bisect = d3.bisector(function(d) { return d.timestamp; }).right;
 
 var interpolateHeightsForTime = function(t) {
 
+    var triggerBell = false;
+
     locations.forEach(function(d) {
 
         if(!d.next || t > d.next.timestamp || !d.prev || t < d.prev.timestamp) {
@@ -261,19 +264,25 @@ var interpolateHeightsForTime = function(t) {
 
         } else {
             d.height = null;
-        }        
+        }      
         if(d.name == "Penzance (Newlyn)"/*Land's end"*/ || d.name == "London Bridge (Tower Pier)") {
             if(d.localHeightNormalized > 0.98) {
-                if(!ringBell) {
-                    audio.playBell();
-                    ringBell = true;
-                }
-            } else {
-                ringBell = false;
+                triggerBell = true; 
             }
         }
 
     });
+    
+    if(triggerBell) {
+        if(!ringBell) {
+            audio.playBell();
+            ringBell = true;
+            console.log("trigger bell");
+        }
+    } else {
+        ringBell = false;
+    }
+    
 };
 
 d3.json("./data/uk.json", function(error, uk) {

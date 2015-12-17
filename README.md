@@ -105,6 +105,8 @@ callable = app
 
 # Add crontab
     
+    $ mkdir /home/ubuntu/log
+    
     $ crontab -e
 
     Add 
