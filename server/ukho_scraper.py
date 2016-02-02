@@ -150,23 +150,23 @@ def update_tide_data():
     for location in locations.find({u'port_id': {"$exists": True}, u'coast_select': True}):
         fetch_data = get_port(location[u'port_id'])
 
-        if fetch_data['has_data']:
+        if fetch_data:
+            if fetch_data['has_data']:
+                s = {}
+                if fetch_data["missing_data"]:
+                    s["missing_data"] = True
 
-            s = {}
-            if fetch_data["missing_data"]:
-                s["missing_data"] = True
+                s["last_fetched"] = datetime.utcnow()
 
-            s["last_fetched"] = datetime.utcnow()
-
-            locations.update_one(
-                {"_id": location['_id']},
-                {
-                    "$set": s,
-                    "$push": {
-                        "logs": {"$each": fetch_data['logs']}
-                        }
-                }
-            )
+                locations.update_one(
+                    {"_id": location['_id']},
+                    {
+                        "$set": s,
+                        "$push": {
+                            "logs": {"$each": fetch_data['logs']}
+                            }
+                    }
+                )
 
 def scan_all_ports():
     ports = []
