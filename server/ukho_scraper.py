@@ -27,6 +27,7 @@ tide_logs = db.tide_logs
 
 BASE_URL = "http://www.ukho.gov.uk/EasyTide/EasyTide/"
 
+
 def get_port(port_id, predict_days=7):
     port = {}
     port['port_id'] = port_id
@@ -146,7 +147,7 @@ def get_port(port_id, predict_days=7):
 
 def update_tide_data():
 
-    for location in locations.find({u'port_id': {"$exists": True}}):
+    for location in locations.find({u'port_id': {"$exists": True}, u'coast_select': True}):
         fetch_data = get_port(location[u'port_id'])
 
         if fetch_data['has_data']:
